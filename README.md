@@ -126,3 +126,15 @@ src/
 `dist/` is a static site with relative asset paths (`base: './'`). Options:
 - **GitHub Pages**: push this repo and serve `dist/` (for example with a `gh-pages` branch or an Actions workflow).
 - **Netlify / Vercel / Cloudflare Pages**: build command `npm run build`, publish directory `dist`.
+
+## Tests (v0.1 status)
+`tests/run-all.mjs` runs 7 Playwright suites, 80 checks in total:
+- **Desktop boot**: title screen, zero console errors, fonts, new game, dialogue, WASD/sprint, mouse attacks, camera, all menu tabs, customization, TH/EN, help.
+- **Core loop**: sim mode. Beats grunts without god mode, EXP/money/rep, AI attack-token cap (≤2 attackers), circling, habit tracking, level-up, skill unlock through the UI, and **all 9 quests completed through the real quest system** by an in-page bot with no god mode. Includes 3 mini-bosses and 3 bosses with phase transitions.
+- **Save**: slot save through the UI, reload, Continue restores state, autosave, corrupt saves, v1→v2 migration.
+- **World rules**: map bounds, no falling through the ground, no building/water penetration, rooftop edges, no hits through walls in either direction (with a positive control).
+- **Mobile**: Pixel 7 portrait and landscape, touch joystick, drag-look, buttons, menu.
+- **Visual**: screenshot capture at quality high.
+- **Gamepad**: a virtual pad drives the stick, face buttons and menu.
+
+Selected screenshots are in `docs/screenshots/`.

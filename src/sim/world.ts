@@ -315,7 +315,7 @@ export class World {
   }
   useDoor(id: string) {
     const p = this.player;
-    if (id === 'door_roof') { p.layer = 1; p.x = p.px = ROOF.roofSpawn[0]; p.z = p.pz = ROOF.roofSpawn[1]; p.yaw = Math.PI; this.camYaw = 0; }
+    if (id === 'door_roof') { p.layer = 1; p.x = p.px = ROOF.roofSpawn[0]; p.z = p.pz = ROOF.roofSpawn[1]; p.yaw = -Math.PI / 2; this.camYaw = Math.PI / 2; }
     else { p.layer = 0; p.x = p.px = ROOF.door[0]; p.z = p.pz = ROOF.door[1] + 1.5; this.camYaw = Math.PI; }
     p.vx = p.vz = 0; this.emit('teleport', { layer: p.layer });
   }

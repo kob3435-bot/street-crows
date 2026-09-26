@@ -1,11 +1,311 @@
 [
   {
-    "name": "visual: screenshots captured (day/combat/boss/golden/night/rooftop)",
+    "name": "boot: title screen visible",
     "ok": true,
-    "info": "heavy/counter hits during combat capture: 9; fps(swiftshader, high) 10.0"
+    "info": ""
   },
   {
-    "name": "visual run: zero console/runtime errors (quality high)",
+    "name": "boot: HUD hidden on title",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "boot: Thai font loaded (Kanit)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "new game: HUD visible",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "new game: tutorial active",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "new game: intro dialogue shown",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "dialogue: advanced by clicking",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "movement: WASD + Shift sprint moves player",
+    "ok": true,
+    "info": "moved 11.2 m"
+  },
+  {
+    "name": "combat input: LMB/RMB/F produce attacks",
+    "ok": true,
+    "info": "2 swings"
+  },
+  {
+    "name": "camera: mouse drag rotates orbit camera",
+    "ok": true,
+    "info": "dyaw -0.64"
+  },
+  {
+    "name": "menu: Tab opens menu, sim frozen",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "menu: all 10 tabs render without errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "customization: hair style changes",
+    "ok": true,
+    "info": "pompadour"
+  },
+  {
+    "name": "i18n: TH→EN toggle updates menu",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "menu: Tab closes menu",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "help: H opens controls panel",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "render: frames rendering",
+    "ok": true,
+    "info": "fps 13.8 (software GL), draw calls 297"
+  },
+  {
+    "name": "boot: zero console/runtime errors (desktop)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "combat: player beats 3 grunts (no god mode, no items)",
+    "ok": true,
+    "info": "22s sim, HP left 24/100"
+  },
+  {
+    "name": "progression: EXP / money / rep gained from fights",
+    "ok": true,
+    "info": "exp 69 lvl 1 ¥706 rep 18"
+  },
+  {
+    "name": "AI: attack-token system (<=2 simultaneous attackers of 6)",
+    "ok": true,
+    "info": "max 2; mode mix {\"circle\":4657,\"approach\":23,\"attack\":1462,\"recover\":890,\"feint\":168}"
+  },
+  {
+    "name": "AI: uses spacing/circling (not just walk-up-and-spam)",
+    "ok": true,
+    "info": "{\"circle\":4657,\"approach\":23,\"attack\":1462,\"recover\":890,\"feint\":168}"
+  },
+  {
+    "name": "AI: tracks player habits (punch spam detected)",
+    "ok": true,
+    "info": "punch habit 0.1 -> 8.1, punchSpam=true"
+  },
+  {
+    "name": "progression: level up grants stat + skill points",
+    "ok": true,
+    "info": "Lv2 -> Lv3"
+  },
+  {
+    "name": "skills: unlocking a skill in the Skills tab works",
+    "ok": true,
+    "info": "iron_fist"
+  },
+  {
+    "name": "skills: learned skill changes player combat mods",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: tutorial",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: main1",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: side_cat",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: side_ramen",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: side_mikami",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: side_yamikaze",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: main2",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: side_rumor",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quest completable: main3",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "quests: offer modal accepted via UI (side quests started)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "bosses: mini-bosses spawned + defeated (Onoda, Kuroki, Tsukiyo)",
+    "ok": true,
+    "info": "onoda,kuroki,kirishima,tsukiyo,goda,hayate"
+  },
+  {
+    "name": "bosses: 3 bosses defeated (Kirishima, Goda, Hayate)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "bosses: bossStart fired for every boss encounter",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "bosses: 3-phase transitions happen (phase 2 & final)",
+    "ok": true,
+    "info": "onoda:1,onoda:2,kuroki:1,kuroki:2,kirishima:1,kirishima:2,kirishima:1,kirishima:2,tsukiyo:1,tsukiyo:2,goda:1,goda:2,hayate:1,hayate:2"
+  },
+  {
+    "name": "story: chapter 1-3 finished, gangs turned friendly",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "core loop: zero runtime errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile portrait: coarse pointer detected, low quality auto-selected",
+    "ok": true,
+    "info": "quality 0"
+  },
+  {
+    "name": "mobile portrait: dialogue advanced by tapping",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile portrait: touch controls visible",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile portrait: virtual joystick moves the player",
+    "ok": true,
+    "info": "moved 18.4 m"
+  },
+  {
+    "name": "mobile portrait: drag on right side rotates camera",
+    "ok": true,
+    "info": "dyaw -0.54"
+  },
+  {
+    "name": "mobile portrait: attack buttons trigger moves",
+    "ok": true,
+    "info": "4 swings"
+  },
+  {
+    "name": "mobile portrait: menu button opens menu",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile portrait: zero console/runtime errors",
+    "ok": true,
+    "info": " fps(swiftshader) 39.3"
+  },
+  {
+    "name": "mobile landscape: coarse pointer detected, low quality auto-selected",
+    "ok": true,
+    "info": "quality 0"
+  },
+  {
+    "name": "mobile landscape: dialogue advanced by tapping",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile landscape: touch controls visible",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile landscape: virtual joystick moves the player",
+    "ok": true,
+    "info": "moved 19.3 m"
+  },
+  {
+    "name": "mobile landscape: drag on right side rotates camera",
+    "ok": true,
+    "info": "dyaw -0.54"
+  },
+  {
+    "name": "mobile landscape: attack buttons trigger moves",
+    "ok": true,
+    "info": "4 swings"
+  },
+  {
+    "name": "mobile landscape: menu button opens menu",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile landscape: zero console/runtime errors",
+    "ok": true,
+    "info": " fps(swiftshader) 31.5"
+  },
+  {
+    "name": "gamepad: left stick moves, right stick turns camera",
+    "ok": true,
+    "info": "moved 4.0 m, dyaw -0.40"
+  },
+  {
+    "name": "gamepad: X/Y/B trigger punch/heavy/kick",
+    "ok": true,
+    "info": "2 swings"
+  },
+  {
+    "name": "gamepad: Back opens the menu",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "gamepad: zero runtime errors",
     "ok": true,
     "info": ""
   }

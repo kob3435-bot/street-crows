@@ -63,7 +63,7 @@ export const TRACKS: [number, number, number, number] = [86, 40, 198, 48];
 // Park pond (collider)
 export const POND: [number, number, number] = [-150, 60, 14]; // cx, cz, r
 // Rooftop of Kurogane main building (separate layer)
-export const ROOF = { rect: [-188, -190, -106, -170] as [number, number, number, number], y: 15, door: [-130, -166] as [number, number], roofSpawn: [-132, -174] as [number, number] };
+export const ROOF = { rect: [-188, -190, -106, -170] as [number, number, number, number], y: 15, door: [-130, -166] as [number, number], roofSpawn: [-130, -173] as [number, number] };
 
 export interface Interactable { id: string; pos: [number, number]; kind: 'npc' | 'shop' | 'door' | 'bench' | 'bus' | 'item' | 'board'; label: LText; npc?: string; layer?: number }
 export const INTERACTABLES: Interactable[] = [
@@ -78,7 +78,7 @@ export const INTERACTABLES: Interactable[] = [
   { id: 'npc_daigo', kind: 'npc', npc: 'daigo', pos: [-150, -178], layer: 1, label: { th: 'คุยกับไดโกะ', en: 'Talk to Daigo' } },
   { id: 'npc_granny', kind: 'npc', npc: 'granny', pos: [20, -4], label: { th: 'คุณยายดูกังวล', en: 'A worried grandma' } },
   { id: 'door_roof', kind: 'door', pos: [-130, -166.5], label: { th: 'ขึ้นดาดฟ้า', en: 'Go to rooftop' } },
-  { id: 'door_roof_down', kind: 'door', pos: [-130, -171.5], layer: 1, label: { th: 'ลงจากดาดฟ้า', en: 'Go downstairs' } },
+  { id: 'door_roof_down', kind: 'door', pos: [-130, -174.6], layer: 1, label: { th: 'ลงจากดาดฟ้า', en: 'Go downstairs' } },
   { id: 'bench_park', kind: 'bench', pos: [-120, 30], label: { th: 'นั่งพัก (ข้ามเวลา)', en: 'Rest (skip time)' } },
   { id: 'bench_river', kind: 'bench', pos: [20, 104], label: { th: 'นั่งพัก (ข้ามเวลา)', en: 'Rest (skip time)' } },
   { id: 'bus_station', kind: 'bus', pos: [110, 10], label: { th: 'ป้ายรถเมล์ (เดินทางด่วน)', en: 'Bus stop (fast travel)' } },

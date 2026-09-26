@@ -49,8 +49,9 @@ export function generateCity(): CityData {
   // Rooftop furniture (layer 1) and fence
   const [rx0, rz0, rx1, rz1] = ROOF.rect;
   fence(rx0, rz0, rx1, rz0, [], 1.6, '#8a9a90', 1); fence(rx0, rz1, rx1, rz1, [], 1.6, '#8a9a90', 1); fence(rx0, rz0, rx0, rz1, [], 1.6, '#8a9a90', 1); fence(rx1, rz0, rx1, rz1, [], 1.6, '#8a9a90', 1);
-  solidProp({ t: 'stairhouse', x: -130, z: -174, w: 6, d: 4, h: 3.2, layer: 1, color: '#9a9890' }, 6, 4, 3.2);
+  solidProp({ t: 'stairhouse', x: -130, z: -177.2, w: 6, d: 4, h: 3.2, layer: 1, color: '#a8aca6' }, 6, 4, 3.2);
   solidProp({ t: 'tank', x: -172, z: -182, w: 5, d: 5, h: 4, layer: 1, color: '#b0b8bc' }, 5, 5, 4);
+  props.push({ t: 'bench', x: -150, z: -187, layer: 1 } as any, { t: 'bench', x: -112, z: -187, layer: 1 } as any, { t: 'vending', x: -125.5, z: -174.6, layer: 1 } as any);
   // School fences with gates
   fence(-196, -90, -88, -90, [[-142, -118]]); fence(-196, -196, -196, -90); fence(-196, -196, -88, -196); fence(-88, -150, -88, -90);
   fence(88, -90, 196, -90, [[128, 152]]); fence(196, -196, 196, -90); fence(88, -196, 196, -196); fence(88, -128, 88, -90);

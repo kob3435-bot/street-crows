@@ -98,7 +98,7 @@ export class QuestSystem {
     else if (s.kind === 'talk' || s.kind === 'interact') { const it = this.w.interactables().find(i => i.id === s.target); if (it) { pos = it.pos; layer = it.layer || 0; } }
     else if (s.kind === 'skill') { pos = [p.x, p.z]; layer = p.layer; }
     if (layer === 1 && p.layer === 0) { pos = [ROOF.door[0], ROOF.door[1]]; layer = 0; }
-    if (layer === 0 && p.layer === 1) { pos = [ROOF.door[0], ROOF.door[1] - 5]; layer = 1; }
+    if (layer === 0 && p.layer === 1) { pos = [ROOF.door[0], -174.6]; layer = 1; }
     return { text: tx(s.obj), pos, layer, quest: q };
   }
   objective() { const a = this.active.find(x => x.id === this.tracked) || this.active[0]; return a ? this.objectiveFor(a) : null; }

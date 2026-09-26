@@ -14,7 +14,7 @@ async function run(R, b, landscape) {
   check(R, `mobile ${tag}: coarse pointer detected, low quality auto-selected`, coarse && q === 0, `quality ${q}`);
   if (!landscape) await shot(page, 'm00_title_portrait');
   await page.tap('[data-m="new"]'); await sleep(800);
-  for (let i = 0; i < 20 && await page.isVisible('#dialogue'); i++) { await page.tap('#dialogue .txt'); await sleep(100); }
+  for (let i = 0; i < 20 && await page.isVisible('#dialogue'); i++) { await page.tap('#dialogue .txt', { timeout: 1500 }).catch(() => {}); await sleep(100); }
   check(R, `mobile ${tag}: dialogue advanced by tapping`, !(await page.isVisible('#dialogue')));
   check(R, `mobile ${tag}: touch controls visible`, await page.isVisible('#touch .btns') && await page.isVisible('[data-a="punch"]'));
   const cdp = await ctx.newCDPSession(page);

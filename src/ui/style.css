@@ -143,4 +143,4 @@ body:not(.ingame) #hud, body:not(.ingame) #touch { display: none !important; }
 body.touchmode #keys { display: none; }
 
 @media (orientation: portrait) { body.touchmode #touch .top { right: auto; left: 10px; top: 188px; flex-direction: column; } }
-@media (orientation: landscape) and (max-height: 520px) { body.touchmode #h-quest { position: fixed; left: 12px; top: 128px; width: 34vw; right: auto; } body.touchmode #h-zone { display: none; } }
+@media (orientation: landscape) and (max-height: 520px) { body.touchmode #h-quest { position: fixed; left: 12px; top: 150px; width: 30vw; right: auto; } body.touchmode #h-zone { display: none; } }

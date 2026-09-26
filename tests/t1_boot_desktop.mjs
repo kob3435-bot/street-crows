@@ -13,7 +13,7 @@ export default async function (R) {
   check(R, 'new game: tutorial active', (await state(page)).active.includes('tutorial:0'));
   check(R, 'new game: intro dialogue shown', await page.isVisible('#dialogue'));
   // advance dialogue by clicking the box (real UI)
-  for (let i = 0; i < 20 && await page.isVisible('#dialogue'); i++) { await page.click('#dialogue'); await sleep(120); }
+  for (let i = 0; i < 20 && await page.isVisible('#dialogue'); i++) { await page.click('#dialogue', { timeout: 1500 }).catch(() => {}); await sleep(120); }
   check(R, 'dialogue: advanced by clicking', !(await page.isVisible('#dialogue')));
   const s0 = await state(page);
   await page.keyboard.down('KeyW'); await sleep(1500); await page.keyboard.down('ShiftLeft'); await sleep(1500); await page.keyboard.up('ShiftLeft'); await page.keyboard.up('KeyW');

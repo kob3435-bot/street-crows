@@ -52,8 +52,8 @@ export class CityView {
       case 'bike': out.push(I('box', p.color!, p.x, 0.35, p.z, 1.8, 0.45, 0.4, r)); out.push(I('box', '#222', p.x, 0.75, p.z, 0.9, 0.2, 0.35, r)); break;
       case 'container': out.push(I('box', p.color!, p.x, 0, p.z, 6, 2.6, 2.5, r)); break;
       case 'crate': out.push(I('box', '#a07a4a', p.x, 0, p.z, 1.2, 1.2, 1.2, r)); break;
-      case 'bench': out.push(I('box', '#8a5a3a', p.x, 0.42, p.z, 2, 0.12, 0.6)); out.push(I('box', '#8a5a3a', p.x, 0.5, p.z + 0.3, 2, 0.5, 0.1)); out.push(I('box', '#333', p.x - 0.8, 0, p.z, 0.1, 0.42, 0.5, 0, false)); out.push(I('box', '#333', p.x + 0.8, 0, p.z, 0.1, 0.42, 0.5, 0, false)); break;
-      case 'vending': out.push(I('box', p.color!, p.x, 0, p.z, 1.2, 1.9, 0.8, r)); { const [fx, fz] = off(0, 0.41); out.push(I('box', '#fff', fx, 0.9, fz, 0.9, 0.8, 0.02, r, false, 'vendingFront')); } break;
+      case 'bench': out.push(I('box', '#8a5a3a', p.x, y0 + 0.42, p.z, 2, 0.12, 0.6)); out.push(I('box', '#8a5a3a', p.x, y0 + 0.5, p.z + 0.3, 2, 0.5, 0.1)); out.push(I('box', '#333', p.x - 0.8, y0, p.z, 0.1, 0.42, 0.5, 0, false)); out.push(I('box', '#333', p.x + 0.8, y0, p.z, 0.1, 0.42, 0.5, 0, false)); break;
+      case 'vending': out.push(I('box', p.color || '#d03a3a', p.x, y0, p.z, 1.2, 1.9, 0.8, r)); { const [fx, fz] = off(0, 0.41); out.push(I('box', '#fff', fx, y0 + 0.9, fz, 0.9, 0.8, 0.02, r, false, 'vendingFront')); } break;
       case 'fence': out.push(I('box', p.color || '#5a6a60', p.x, y0, p.z, p.w!, p.h || 2.2, p.d!, 0, true)); break;
       case 'arch': out.push(I('box', '#c8b48a', p.x, 7.2, p.z, 9.5, 0.35, 0.5, 0)); out.push(I('box', '#d8d0c0', p.x, 7.4, p.z + 4, 9, 0.12, 8, 0, false)); break;
       case 'lantern': out.push(I('sphere', '#fff', p.x, 5.6, p.z, 0.55, 0.75, 0.55, 0, false, 'lantern')); break;
@@ -81,8 +81,9 @@ export class CityView {
         const w = b.x1 - b.x0, d = b.z1 - b.z0, cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2;
         m.compose(new THREE.Vector3(cx, 0, cz), q, new THREE.Vector3(w, b.h, d)); im.setMatrixAt(i, m); im.setColorAt(i, col.set(b.color));
         m.compose(new THREE.Vector3(cx, -t, cz), q, new THREE.Vector3(w + t * 2, b.h + t * 2, d + t * 2)); om.setMatrixAt(i, m);
-        roofs.push(this.I('box', '#6a6a66', cx, b.h, cz, w + 0.4, 0.5, d + 0.4, 0, false));
-        if (b.kind !== 'school' && b.kind !== 'warehouse' && w > 6 && d > 6 && (i % 3 === 0)) roofs.push(this.I('box', '#9a9a96', cx + w * 0.2, b.h + 0.5, cz - d * 0.15, 1.8, 1.2, 1.4));
+        const isRoofTop = b.x0 <= ROOF.rect[0] + 1 && b.x1 >= ROOF.rect[2] - 1 && b.z0 <= ROOF.rect[1] + 1 && b.z1 >= ROOF.rect[3] - 1; // playable rooftop: keep the floor clear
+        if (!isRoofTop) roofs.push(this.I('box', '#6a6a66', cx, b.h, cz, w + 0.4, 0.5, d + 0.4, 0, false));
+        if (!isRoofTop && b.kind !== 'school' && b.kind !== 'warehouse' && w > 6 && d > 6 && (i % 3 === 0)) roofs.push(this.I('box', '#9a9a96', cx + w * 0.2, b.h + 0.5, cz - d * 0.15, 1.8, 1.2, 1.4));
         if (b.kind === 'shop' || b.kind === 'alley') { // awning
           const side = b.signSide || 's'; const aw = side === 'e' || side === 'w' ? [0.9, 0.12, d * 0.9] : [w * 0.9, 0.12, 0.9]; const ax = side === 'e' ? b.x1 + 0.45 : side === 'w' ? b.x0 - 0.45 : cx; const az = side === 's' ? b.z1 + 0.45 : side === 'n' ? b.z0 - 0.45 : cz;
           roofs.push(this.I('box', ['#c83a3a', '#3a6ac8', '#e0a030', '#3a9a5a'][i % 4], ax, 3.1, az, aw[0], 0.38, aw[2], 0, false)); roofs.push(this.I('box', '#f4f0e6', ax, 2.86, az, aw[0] * 1.01, 0.1, aw[2] * 1.01, 0, false));
@@ -128,7 +129,7 @@ export class CityView {
     glow.position.copy(mesh.position); glow.scale.set(w * 2.2, h * 1.6, 1); g.add(glow); this.glowSprites.push(glow);
   }
   private buildGround() {
-    const kinds: Record<string, string> = { road: '#3b3d44', tile: '#b7a68a', grass: '#6aa84f', dirt: '#b99c6c', concrete: '#8f8e88', parking: '#46484e', deck: '#8b8781', roof: '#7c7b76', rail: '#5a4c3e' };
+    const kinds: Record<string, string> = { road: '#3b3d44', tile: '#b7a68a', grass: '#6aa84f', dirt: '#b99c6c', concrete: '#8f8e88', parking: '#46484e', deck: '#8b8781', roof: '#8e948f', rail: '#5a4c3e' };
     const base = new THREE.Mesh(new THREE.PlaneGeometry(MAP_HALF * 2 + 60, MAP_HALF * 2 + 60).rotateX(-Math.PI / 2), toon('#9b978f')); base.receiveShadow = true; this.group.add(base);
     const byKind = new Map<string, THREE.BufferGeometry[]>();
     let order = 0;
