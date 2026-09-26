@@ -103,11 +103,13 @@ export class GameRenderer {
     const combatNear = w.fighters.some(f => !f.isPlayer && f.aggro && f.alive && f.distTo(p) < 14);
     for (const f of w.fighters) {
       const d = Math.hypot(f.x - this.camera.position.x, f.z - this.camera.position.z);
-      if (d > 90 && !f.isPlayer) continue;
+      if (d > (this.quality === 0 ? 70 : 90) && !f.isPlayer) continue;
       seen.add(f.id); let rig = this.rigs.get(f.id);
       if (!rig) { rig = new CharacterRig(f.appearance, { hero: f.isPlayer }); this.rigs.set(f.id, rig); this.scene.add(rig.root); }
       if (f.isPlayer && rig.look !== f.appearance) { rig.dispose(); rig = new CharacterRig(f.appearance, { hero: true }); this.rigs.set(f.id, rig); this.scene.add(rig.root); }
-      rig.update(f, dt, alpha, f.isPlayer ? combatNear : false); rig.setOutlines(d < (this.quality === 0 ? 25 : 45));
+      const standing = f.state === 'idle' || f.state === 'move' || f.state === 'block';
+      const q0 = this.quality === 0; rig.setLod(f.isPlayer || f.phases ? 0 : d < (q0 ? 15 : 24) ? 0 : d < (q0 ? 24 : 34) || !standing ? 1 : 2);
+      rig.update(f, dt, alpha, f.isPlayer ? combatNear : false);
     }
     for (const [id, rig] of this.rigs) if (!seen.has(id)) { rig.dispose(); this.rigs.delete(id); }
     // static NPC actors (hidden while unavailable, e.g. before their chapter or while that character is fighting)

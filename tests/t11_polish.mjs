@@ -10,19 +10,22 @@ export default async function (R) {
   await page.evaluate(() => { const w = window.__game.world; w.eventTimer = 1e9; w.spawnTimer = 1e9; });
   // --- A: a street lamp right between camera and player fades (and un-fades when clear)
   const A = await page.evaluate(async () => {
-    const G = window.__game, w = G.world, r = G.renderer, city = r.city; const lamps = w.city.lamps;
-    const sl = (ms) => new Promise(res => setTimeout(res, ms));
-    for (const [lx, lz] of lamps.slice(0, 12)) {
-      // stand 7 m from the lamp and look back through it
-      for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2; const px = lx + Math.sin(a) * 7, pz = lz + Math.cos(a) * 7; if (w.col.solidAt(px, pz, 0.6, 0)) continue;
-        w.teleport(px, pz, 0); w.camYaw = a + Math.PI; w.camPitch = 0.42; await sl(2200); // camera eases back out to its 11 m after a teleport
-        const c = r.camera.position; const pi = city.pinfos.find(q => lx > q.x0 && lx < q.x1 && lz > q.z0 && lz < q.z1 && q.y1 > 4);
-        if (!pi) continue; const between = Math.hypot(c.x - lx, c.z - lz) < Math.hypot(c.x - px, c.z - pz);
-        if (!between) continue;
-        const faded = pi.cur; w.camYaw = a; await sl(1200); const back = pi.cur;
-        return { lamp: [lx, lz], faded, back, props: city.propFadeCount };
-      } }
-    return null;
+    const G = window.__game, w = G.world, r = G.renderer, city = r.city; const sl = (ms) => new Promise(res => setTimeout(res, ms));
+    // pick (synchronously) a lamp + side where the player spot is free and the camera boom behind the lamp is unobstructed
+    let pick = null; const P = 0.42;
+    for (const [lx, lz] of w.city.lamps) { if (Math.abs(lx) > 160 || Math.abs(lz) > 160) continue;
+      for (let k = 0; k < 4 && !pick; k++) { const a = k * Math.PI / 2, px = lx + Math.sin(a) * 7, pz = lz + Math.cos(a) * 7; if (w.col.solidAt(px, pz, 0.8, 0)) continue;
+        const yaw = a + Math.PI, dx = Math.sin(yaw) * Math.cos(P), dy = Math.sin(P), dz = Math.cos(yaw) * Math.cos(P);
+        if (w.col.ray(px, 1.2, pz, dx, dy, dz, 13, true) >= 12.5 && w.col.ray(px, 1.2, pz, -dx, 0, -dz, 3, true) >= 2.9) pick = { lx, lz, px, pz, yaw, a }; }
+      if (pick) break; }
+    if (!pick) return { none: true };
+    w.teleport(pick.px, pick.pz, 0); w.camYaw = pick.yaw; w.camPitch = P;
+    // let the chunk stream in and the camera boom settle (it starts at the default distance, then may ease in), then read the fade
+    let last = -1, calm = 0; for (let t = 0; t < 60 && calm < 4; t++) { await sl(150); const d = r.camDist; calm = Math.abs(d - last) < 0.05 && t > 6 ? calm + 1 : 0; last = d; } await sl(900);
+    const pi = city.pinfos.find(q => pick.lx > q.x0 && pick.lx < q.x1 && pick.lz > q.z0 && pick.lz < q.z1 && q.y1 > 4);
+    if (!pi) return { noInfo: true, pick };
+    const faded = pi.cur, dist = r.camDist; w.camYaw = pick.a; await sl(1500); const back = pi.cur;
+    return { lamp: [pick.lx, pick.lz], camDist: +dist.toFixed(1), faded, back };
   });
   check(R, 'occluders: street lamp between camera and player fades (screen-door), restores when clear', A && A.faded < 0.5 && A.back > 0.95, JSON.stringify(A));
   // --- B: buildings on the sight line fade (stay full height, see-through) — no stubs
@@ -95,9 +98,9 @@ export default async function (R) {
     const spOk = await pg.evaluate(() => { const h = document.querySelector('#hint'); return h.style.display === 'block' && /พิเศษ|SP/.test(h.textContent) && !/\bR\b/.test(h.textContent); });
     await pg.tap('#hint'); await sleep(250); const closed = !(await pg.isVisible('#hint'));
     check(R, `touch ${tag}: special hint references the พิเศษ button, tap closes it`, spOk && closed, JSON.stringify({ spOk, closed }));
-    await pg.evaluate(() => { const w = window.__game.world; for (const f of w.fighters) if (!f.isPlayer) w.despawn(f); const it = w.interactables().find(i => i.kind === 'npc' && (i.layer || 0) === 0); w.teleport(it.pos[0] + 0.8, it.pos[1] + 0.8, 0); });
-    await sleep(700);
-    const pr = await pg.evaluate(() => { const e = document.querySelector('#prompt'); return { vis: e.style.display === 'block', html: e.innerHTML }; });
+    await dbg(pg, 'skipDialogue'); await pg.evaluate(() => { const w = window.__game.world, p = w.player; for (const f of w.fighters) if (!f.isPlayer) w.despawn(f); w.godMode = true; w.downT = 0; p.hp = p.maxHp; p.setState('idle'); const it = w.interactables().find(i => i.kind === 'npc' && (i.layer || 0) === 0); window.__npc = it; w.teleport(it.pos[0] + 0.8, it.pos[1] + 0.8, 0); });
+    for (let t = 0; t < 30; t++) { const ok = await pg.evaluate(() => { const G = window.__game, w = G.world, it = window.__npc; if (w.dialogue) G.debug.skipDialogue(); if (Math.hypot(w.player.x - it.pos[0], w.player.z - it.pos[1]) > 2.5) w.teleport(it.pos[0] + 0.8, it.pos[1] + 0.8, 0); return document.querySelector('#prompt').style.display === 'block'; }); if (ok) break; await sleep(200); } // quest lines may pop up; skip them
+    const pr = await pg.evaluate(() => { const e = document.querySelector('#prompt'); const w = window.__game.world; return { vis: e.style.display === 'block', html: e.innerHTML || JSON.stringify({ t: w.interactTarget && w.interactTarget.id, dlg: !!w.dialogue, menu: w.menuOpen, p: [w.player.x | 0, w.player.z | 0, w.player.state], n: w.interactables().filter(i => i.kind === 'npc').length, hud: document.querySelector('#hud').className }) }; });
     check(R, `touch ${tag}: interact prompt shows the 💬 button, not "E"`, pr.vis && /💬/.test(pr.html) && !/>E</.test(pr.html), pr.html.slice(0, 80));
     check(R, `touch ${tag}: zero console errors`, L.length === 0, L.slice(0, 3).join(' | '));
     await ctx.close();

@@ -36,6 +36,7 @@ const ui = document.getElementById('ui')!;
 const net = new LocalSimulatedNetwork([[126, 12], [60, 12], [2, 12], [2, -40], [-60, 12], [-90, 22], [-10, 60], [0, 100], [40, 14]], 3);
 net.connect();
 const world = new World(net, [50, 110, 170][quality]);
+world.maxActive = [26, 36, 44][quality]; // simultaneous street fighters (mobile/low keeps fewer rigs + AI alive)
 const input = new Input(canvas);
 const saves = new LocalStorageSaveProvider();
 let renderer: GameRenderer | null = null;

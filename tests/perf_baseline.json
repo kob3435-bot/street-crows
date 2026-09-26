@@ -1,0 +1,28 @@
+{
+  "measuredAt": "2026-09-26T06:28:19.244Z",
+  "note": "pre-density build 97a3cf9 (+label widths)",
+  "runs": [
+    {
+      "quality": 1,
+      "frameMed": 83.4,
+      "frameP90": 100,
+      "frameMean": 90.51,
+      "frames": 67,
+      "fighters": 10,
+      "simMs": 0.017,
+      "simFighters": 9,
+      "simDialogueFrames": 0
+    },
+    {
+      "quality": 0,
+      "frameMed": 33.3,
+      "frameP90": 33.4,
+      "frameMean": 30.03,
+      "frames": 200,
+      "fighters": 10,
+      "simMs": 0.021,
+      "simFighters": 10,
+      "simDialogueFrames": 0
+    }
+  ]
+}

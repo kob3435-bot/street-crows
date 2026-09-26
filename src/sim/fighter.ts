@@ -26,7 +26,9 @@ export class Fighter {
   ai: AIBrain | null = null; phases: BossPhase[] | null = null; phase = 0; special = ''; moveset: string[] = ['jab', 'jab2', 'kick'];
   aggro = false; loiter = true; feud = ''; hostileToPlayer = true; civilian = false; encounter = ''; displayTitle = ''; expValue = 20; moneyValue = 100;
   animT = 0; speedNow = 0; lastHitTime = 0; comboCount = 0; comboTimer = 0; telegraph = 0; stanceHit = false; slowmo = 1; throwHits: Fighter | null = null; moveInstance = 0; lastAttacker: Fighter | null = null; bubble = ''; bubbleT = 0;
-  variant = ''; buffed = false; patrol: { leader: Fighter | null; tx: number; tz: number; zone: string; ox: number; oz: number } | null = null; group: any = undefined;
+  variant = ''; buffed = false; patrol: { leader: Fighter | null; tx: number; tz: number; zone: string; ox: number; oz: number; route?: [number, number][] | null; ri?: number; rt?: number } | null = null; group: any = undefined;
+  /** City gang-site this fighter belongs to (-1 = none); AI LOD accumulators. */
+  siteId = -1; aiAcc = 0; aiTick = 0;
 
   get alive() { return this.state !== 'ko' && this.hp > 0; }
   get busy() { return !(this.state === 'idle' || this.state === 'move' || this.state === 'block'); }

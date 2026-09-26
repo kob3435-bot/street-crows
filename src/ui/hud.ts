@@ -121,9 +121,11 @@ export class HUD {
     bus.on('teleport', () => { this.r.camTarget.set(0, 0, 0); });
   }
   private autoTxt = '';
+  /** Screen-relative 8-way arrow for a world bearing (atan2(dx, dz)). */
+  arrow(dir: number) { const F = Math.atan2(-Math.sin(this.w.camYaw), -Math.cos(this.w.camYaw)); let rel = dir - F; while (rel > Math.PI) rel -= Math.PI * 2; while (rel < -Math.PI) rel += Math.PI * 2; return ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'][((Math.round(-rel / (Math.PI / 4)) % 8) + 8) % 8]; }
   update(dt: number) {
-    { const w = this.w; let s = ''; if (w.auto) { const st = w.autoStatus; const tn = w.autoTarget?.alive ? w.autoTarget.name : ''; s = st === 'paused' ? 'AUTO ⏸' : st === 'manual' ? 'AUTO · ' + T('ควบคุมเอง', 'manual') : st === 'none' ? 'AUTO · ' + T('ไม่มีศัตรู', 'no target') : st === 'engage' ? 'AUTO ◉ ' + tn : 'AUTO ▶ ' + tn; }
-      if (s !== this.autoTxt) { this.autoTxt = s; const e = this.q('#h-auto'); e.textContent = s; e.style.display = s ? 'block' : 'none'; e.classList.toggle('eng', w.autoStatus === 'engage'); } }
+    { const w = this.w; let s = ''; if (w.auto) { const st = w.autoStatus; const tn = w.autoTarget?.alive ? w.autoTarget.name : ''; s = st === 'paused' ? 'AUTO ⏸' : st === 'manual' ? 'AUTO · ' + T('ควบคุมเอง', 'manual') : st === 'none' ? 'AUTO · ' + T('ไม่มีศัตรู', 'no target') : st === 'travel' ? 'AUTO: ' + T('กำลังเดินหาศัตรู', 'searching for enemies') + ' · ' + Math.round(w.autoFarDist) + 'm ' + this.arrow(w.autoFarDir) : st === 'engage' ? 'AUTO ◉ ' + tn : 'AUTO ▶ ' + tn; }
+      if (s !== this.autoTxt) { this.autoTxt = s; const e = this.q('#h-auto'); e.textContent = s; e.style.display = s ? 'block' : 'none'; e.classList.toggle('eng', w.autoStatus === 'engage'); e.classList.toggle('far', w.autoStatus === 'travel'); } }
     const w = this.w, p = w.player, g = w.progress, $ = (s: string) => this.q(s);
     this.root.classList.toggle('hidden', w.menuOpen);
     $('#h-hp').style.width = (p.hp / p.maxHp * 100) + '%'; $('#h-hpb').style.width = (p.hp / p.maxHp * 100) + '%'; $('#h-hpt').textContent = `${Math.ceil(p.hp)}/${p.maxHp}`;
@@ -175,7 +177,7 @@ export class HUD {
     for (const c of cands) {
       const f = c.f; const e = tag(); const label = `${f.name}${f.tier === 'mid' ? ' ★' : f.tier === 'miniboss' ? ' ★★' : ''}`; const isT = f === cur;
       let y = c.y; for (let k = 0; k < 3 && bars.some(b => Math.abs(b[0] - c.x) < 44 && Math.abs(b[1] - y) < 7); k++) y -= 7; bars.push([c.x, y]);
-      const wN = label.length * 6.5 + 8, box = [c.x - wN / 2, y - 22, c.x + wN / 2, y - 8];
+      const wN = this.labelW(label, isT) + 8, box = [c.x - wN / 2, y - 24, c.x + wN / 2, y - 6];
       const showName = (isT || f.tier !== 'grunt' || shown < 3 || cands.length <= 3) && !names.some(n => n[0] < box[2] && n[2] > box[0] && n[1] < box[3] && n[3] > box[1]);
       if (showName) { names.push(box); shown++; }
       e.style.left = c.x + 'px'; e.style.top = y + 'px'; (e.querySelector('.tn') as HTMLElement).textContent = label;
@@ -199,6 +201,13 @@ export class HUD {
     for (let i = ti; i < this.tagPool.length; i++) { this.tagPool[i].style.display = 'none'; (this.tagPool[i].querySelector('.th') as HTMLElement).style.display = ''; }
     for (let i = this.enemyTagN; i < ti; i++) this.tagPool[i].classList.remove('nn', 'tgt', 'far');
     for (let i = bi; i < this.bubblePool.length; i++) this.bubblePool[i].style.display = 'none';
+  }
+  private lwCache = new Map<string, number>(); private lwCtx: CanvasRenderingContext2D | null = null; private lwFont = '';
+  /** Rendered width of a name label (canvas text metrics, cached) for the declutter pass. */
+  private labelW(label: string, big: boolean) {
+    const key = (big ? 'B' : 's') + label; let v = this.lwCache.get(key); if (v !== undefined) return v;
+    if (!this.lwCtx) { this.lwCtx = document.createElement('canvas').getContext('2d'); this.lwFont = getComputedStyle(this.root).fontFamily || 'sans-serif'; }
+    this.lwCtx!.font = `700 ${big ? 12 : 11}px ${this.lwFont}`; v = this.lwCtx!.measureText(label).width + 2; this.lwCache.set(key, v); return v;
   }
   private hideMarker() { const m = this.tags.querySelector('.marker') as HTMLElement; if (m) m.style.display = 'none'; }
   private drawMinimap() {

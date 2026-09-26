@@ -90,17 +90,22 @@ export class Input {
       const lx = dz(gp.axes[0] || 0), ly = dz(gp.axes[1] || 0), rx = dz(gp.axes[2] || 0), ry = dz(gp.axes[3] || 0);
       if (lx || ly) { mx = lx; my = -ly; this.lastDevice = 'pad'; }
       if (rx || ry) { this.lookX += rx * 0.05 * this.sensitivity; this.lookY += ry * 0.04 * this.sensitivity * (this.invertY ? -1 : 1); }
-      const b = gp.buttons.map(x => x.pressed);
-      const edge = (i: number, a: Action) => { if (b[i] && !this.padPrev[i]) { this.press(a); this.lastDevice = 'pad'; } };
-      edge(2, 'punch'); edge(3, 'heavy'); edge(1, 'kick'); edge(7, 'hkick'); edge(0, 'dodge'); edge(5, 'grab'); edge(11, 'special'); edge(10, 'auto'); edge(15, 'interact'); edge(8, 'menu'); edge(9, 'pause'); edge(14, 'item1');
+      const b = this.padEdges(gp);
       if (b[4]) block = true; if (b[6]) sprint = true;
       if (b[12]) this.zoomDelta -= 0.22; if (b[13]) this.zoomDelta += 0.22; // D-pad up/down = zoom
-      this.padPrev = b;
     }
     if (this.bot) { mx = this.bot.moveX; my = this.bot.moveY; sprint = this.bot.sprint; block = this.bot.block; }
     const len = Math.hypot(mx, my); if (len > 1) { mx /= len; my /= len; }
     this.moveX = this.enabled ? mx : 0; this.moveY = this.enabled ? my : 0; this.sprint = this.enabled && sprint; this.block = this.enabled && block;
   }
+  /** Button edges -> actions. Also sampled on a 16 ms timer so quick taps are never lost when frames are slow. */
+  private padEdges(gp: Gamepad) {
+    const b = gp.buttons.map(x => x.pressed);
+    const edge = (i: number, a: Action) => { if (b[i] && !this.padPrev[i]) { this.press(a); this.lastDevice = 'pad'; } };
+    edge(2, 'punch'); edge(3, 'heavy'); edge(1, 'kick'); edge(7, 'hkick'); edge(0, 'dodge'); edge(5, 'grab'); edge(11, 'special'); edge(10, 'auto'); edge(15, 'interact'); edge(8, 'menu'); edge(9, 'pause'); edge(14, 'item1');
+    this.padPrev = b; return b;
+  }
+  private padTimer = typeof window !== 'undefined' ? window.setInterval(() => { const pads = navigator.getGamepads ? navigator.getGamepads() : []; const gp = pads && Array.from(pads).find(p => p && p.connected); if (gp) this.padEdges(gp); }, 16) : 0;
   consumePressed(): Set<Action> { const p = this.pressed; this.pressed = new Set(); if (!this.enabled) { const keep = new Set<Action>(); for (const a of p) if (a === 'menu' || a === 'pause' || a === 'interact') keep.add(a); return keep; } return p; }
   consumeLook() { const l = { x: this.lookX, y: this.lookY }; this.lookX = 0; this.lookY = 0; return l; }
   releasePointer() { if (document.pointerLockElement) document.exitPointerLock(); }

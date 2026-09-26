@@ -22,13 +22,15 @@ export class CharacterRig {
   shL = new THREE.Group(); shR = new THREE.Group(); elL = new THREE.Group(); elR = new THREE.Group();
   hipL = new THREE.Group(); hipR = new THREE.Group(); knL = new THREE.Group(); knR = new THREE.Group(); coat: THREE.Object3D | null = null;
   pose: Pose = {}; meshes: THREE.Mesh[] = []; outlines: THREE.Mesh[] = []; stars = new THREE.Group(); excl: THREE.Sprite; flashing = false; look: Appearance; lodFar = false;
+  /** Distance LOD: 0 full, 1 no outlines/shadows/tiny details, 2 four-mesh proxy (standing states only). */
+  lod = 0; tiny: THREE.Mesh[] = []; private low: THREE.Group | null = null; private hero = false;
   constructor(look: Appearance, opts: { hero?: boolean } = {}) {
-    this.look = look; for (const j of JOINTS) this.pose[j] = 0;
+    this.look = look; this.hero = !!opts.hero; for (const j of JOINTS) this.pose[j] = 0;
     const b = look.build, H = 1;
     const part = (parent: THREE.Object3D, geo: THREE.BufferGeometry, size: [number, number, number], color: string, pos: [number, number, number], rot?: [number, number, number], outline = true) => {
       const m = new THREE.Mesh(geo, toon(color)); m.position.set(...pos); if (rot) m.rotation.set(...rot); m.castShadow = true;
       if (outline) { const o = new THREE.Mesh(geo, outlineMat); o.scale.set((size[0] + T * 2) / size[0], (size[1] + T * 2) / size[1], (size[2] + T * 2) / size[2]); m.add(o); this.outlines.push(o); }
-      parent.add(m); this.meshes.push(m); return m;
+      parent.add(m); this.meshes.push(m); if (Math.max(size[0], size[1], size[2]) < 0.07) this.tiny.push(m); return m;
     };
     this.root.add(this.body); this.body.add(this.hips); this.hips.position.y = 0.95 * H;
     part(this.hips, box(0.34 * b, 0.18, 0.22), [0.34 * b, 0.18, 0.22], look.pants, [0, 0, 0]);
@@ -96,12 +98,31 @@ export class CharacterRig {
     }
   }
   setOutlines(v: boolean) { if (this.lodFar === !v) return; this.lodFar = !v; for (const o of this.outlines) o.visible = v; }
+  private buildLow() {
+    const L = this.look, b = L.build, g = new THREE.Group();
+    const add = (geo: THREE.BufferGeometry, color: string, y: number, sy = 1) => { const m = new THREE.Mesh(geo, toon(color)); m.position.y = y; m.scale.y = sy; g.add(m); return m; };
+    add(box(0.3 * b, 0.86, 0.2), L.pants, 0.47); add(box(0.6 * b, 0.62, 0.28), L.jacket, 1.3); add(sph(0.15), L.skin, 1.76, 1.08);
+    if (L.hair !== 'bald') add(sph(0.152), L.hairColor, 1.83, 0.66);
+    g.visible = false; this.root.add(g); this.low = g;
+  }
+  setLod(level: number) {
+    if (this.hero) level = 0; if (level === this.lod) return;
+    const was = this.lod; this.lod = level;
+    this.setOutlines(level === 0);
+    if ((was === 0) !== (level === 0)) { for (const m of this.meshes) m.castShadow = level === 0; for (const m of this.tiny) m.visible = level === 0; }
+    if (level === 2 && !this.low) this.buildLow();
+    if (this.low) this.low.visible = level === 2; this.body.visible = level !== 2;
+  }
   private flash(on: boolean) {
     if (on === this.flashing) return; this.flashing = on;
     for (const m of this.meshes) { if (on) { m.userData.mat = m.material; m.material = flashMat; } else if (m.userData.mat) m.material = m.userData.mat; }
   }
   /** Procedural animation from simulation state. */
   update(f: Fighter, dt: number, alpha: number, combatNear: boolean) {
+    if (this.lod === 2) { // proxy: position/yaw + a little walk bob, no joint posing
+      const x = f.px + (f.x - f.px) * alpha, z = f.pz + (f.z - f.pz) * alpha; this.root.position.set(x, f.y + f.layer * 15, z); this.root.rotation.y = f.yaw;
+      if (this.low) this.low.position.y = f.speedNow > 0.4 ? Math.abs(Math.sin(f.animT * 8)) * 0.05 : 0; this.stars.visible = false; this.excl.visible = f.telegraph > 0; return;
+    }
     const P: Pose = {}; for (const j of JOINTS) P[j] = 0;
     const t = f.animT; const sp = f.speedNow; let k = 16;
     const guard = combatNear || f.aggro;

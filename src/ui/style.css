@@ -159,6 +159,8 @@ body.touchmode #keys, body.dev-touch #keys { display: none; }
 
 #h-auto { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: none; background: rgba(20,24,32,.82); color: #7fe0ff; border: 2px solid #1fb6e8; border-radius: 14px; padding: 3px 12px; font-weight: 800; font-size: 13px; white-space: nowrap; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 #h-auto.eng { color: #fff; background: rgba(31,182,232,.85); }
+#h-auto.far { color: #ffe27a; border-color: #e8b21f; max-width: 72vw; }
+body.touchmode #h-auto.far { max-width: 72vw; font-size: 12px; }
 body.touchmode #h-auto { left: auto; right: max(12px, env(safe-area-inset-right)); transform: none; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 256px); max-width: 60vw; }
 #prompt kbd.k-touch { background: #fbf8f0; color: #111; border: 2px solid #111; border-radius: 10px; font-family: var(--f); font-size: 14px; }
 #prompt kbd.k-pad, #keys kbd.k-pad { background: #2a2c34; color: #fff; border-radius: 9px; }

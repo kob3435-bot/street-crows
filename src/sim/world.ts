@@ -28,6 +28,8 @@ export const ITEMS: Record<string, { name: { th: string; en: string }; price: nu
   drink: { name: { th: 'เครื่องดื่มชูกำลัง', en: 'Energy Drink' }, price: 220, heal: 15, stamina: 100, meter: 25 },
   bento: { name: { th: 'เบนโตะ', en: 'Bento' }, price: 480, heal: 80 },
 };
+/** A persistent gang hangout / patrol spawn in the city (exists even when its zone isn't streamed in). */
+export interface GangSite { id: number; zone: string; x: number; z: number; route: [number, number][] | null; ri: number; gang: string; gangKey: number; respawnAt: number; members: Fighter[]; spawned: boolean; lastT: number }
 interface EncState { id: string; quest: string; fighters: Fighter[]; spawned: boolean; done: boolean }
 export interface StreetEvent { kind: 'bully' | 'challenge' | 'gangwar' | 'ambush' | 'rumble' | 'robbery'; x: number; z: number; fighters: Fighter[]; victim?: Fighter; t: number; done: boolean }
 
@@ -39,7 +41,12 @@ export class World {
   camZoom = 11; static CAM_MIN = 4.5; static CAM_MAX = 18; static CAM_DEFAULT = 11;
   nav: Nav; bestiary = new Set<string>();
   /** AUTO: walks to the nearest hostile. Never attacks/blocks/dodges. */
-  auto = false; autoTarget: Fighter | null = null; autoPath: [number, number][] | null = null; autoRepathT = 0; autoRetargetT = 0; autoHold = 0; autoNoTargetT = 0; autoStatus: 'off' | 'seek' | 'engage' | 'manual' | 'paused' | 'none' = 'off'; autoInRange = false; private autoLastXZ: [number, number, number] = [0, 0, 0];
+  auto = false; autoTarget: Fighter | null = null; autoPath: [number, number][] | null = null; autoRepathT = 0; autoRetargetT = 0; autoHold = 0; autoNoTargetT = 0; autoStatus: 'off' | 'seek' | 'engage' | 'manual' | 'paused' | 'none' | 'travel' = 'off'; autoInRange = false; private autoLastXZ: [number, number, number] = [0, 0, 0];
+  /** AUTO long-range search: current far goal (a gang site, a distant hostile or the quest fight), bans for unreachable goals, stuck detector. */
+  autoFar: { key: string; x: number; z: number; t0: number; d0: number } | null = null; autoFarT = 0; autoFarDist = 0; autoFarDir = 0; autoBan = new Map<string, number>(); autoForceT = 0;
+  private autoStk = { x: 0, z: 0, t: 0, n: 0, key: '' };
+  /** City-wide registry of gang groups (hangouts + roaming patrols). Materialised near the player, virtual elsewhere. */
+  sites: GangSite[] = []; siteT = 0; maxActive = 40; siteRadius = 78;
   relations: Record<string, number> = {}; bosses = new Set<string>(); custom: Appearance & { title: string } = { ...DEFAULT_LOOK, title: '' };
   encounters = new Map<string, EncState>(); dialogue: { lines: DLine[]; i: number; onDone?: () => void } | null = null; menuOpen = false; paused = false;
   remotes = new Map<string, PlayerSnapshot & { seen: number }>(); flags = new Set<string>(); friendlyGangs = new Set<string>();
@@ -47,7 +54,7 @@ export class World {
   stats = { kills: 0, bossKills: 0, perfectDodges: 0, counters: 0, throws: 0, finishers: 0, maxCombo: 0, hitsLanded: 0, hitsTaken: 0 };
   netT = 0; zoneId = ''; godMode = false; lastCombatT = -99; interactTarget: Interactable | null = null; dynInteract: Interactable[] = []; kentaMoved = false;
   constructor(public net: NetworkAdapter | null, crowdCount = 120) {
-    this.city = generateCity(); this.col = this.city.col; this.combat = new Combat(this); this.nav = new Nav(this.col);
+    this.city = generateCity(); this.col = this.city.col; this.combat = new Combat(this); this.nav = new Nav(this.col); this.buildSites();
     this.crowd = new Crowd(crowdCount, this.col); this.quests = new QuestSystem(this);
     for (const c of Object.values(CHAR_BY_ID)) if (c.relationStart !== undefined) this.relations[c.id] = c.relationStart;
     this.progress.onLevel = (l) => { this.emit('levelUp', { level: l }); this.refreshPlayerStats(true); };
@@ -168,7 +175,7 @@ export class World {
     const zn = this.zoneAt(p.x, p.z); this.zoneId = zn.id;
     const nearby = this.fighters.filter(f => !f.isPlayer && f.alive && !f.encounter && !f.civilian && Math.hypot(f.x - p.x, f.z - p.z) < 90);
     // despawn far ambient enemies
-    for (const f of this.fighters) if (!f.isPlayer && !f.encounter && f.alive && !f.aggro && Math.hypot(f.x - p.x, f.z - p.z) > 95 && !this.event?.fighters.includes(f)) this.despawn(f);
+    for (const f of this.fighters) if (!f.isPlayer && !f.encounter && f.siteId < 0 && f.alive && !f.aggro && Math.hypot(f.x - p.x, f.z - p.z) > 95 && !this.event?.fighters.includes(f)) this.despawn(f);
     if (this.dialogue || this.quests.isActive('tutorial')) return;
     const stage = this.storyStage();
     // who spawns here: territory gang; friendly/empty turf gets Stray Dogs; at night after ch7 the Gekko roam
@@ -201,6 +208,99 @@ export class World {
       break;
     }
   }
+  // ---------------- city-wide gang sites (density + AUTO long-range targets) ----------------
+  /** Sites are simulated only while ambient spawning is on (tests switch both off via spawnTimer = 1e9). */
+  get sitesOn() { return this.spawnTimer < 1e8; }
+  private buildSites() {
+    let seed = 90217; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    const encPts = Object.values(ENCOUNTERS).map(e => PLACES[e.place]).filter(pl => !pl.layer).map(pl => pl.pos);
+    const npcPts = INTERACTABLES.filter(i => !i.layer).map(i => i.pos);
+    const ok = (x: number, z: number, minGap: number) => this.nav.walkable(x, z, 0) && !this.col.solidAt(x, z, 1.8, 0) && encPts.every(q => Math.hypot(q[0] - x, q[1] - z) > 14) && npcPts.every(q => Math.hypot(q[0] - x, q[1] - z) > 9)
+      && this.sites.every(s => Math.hypot(s.x - x, s.z - z) > minGap) && Math.hypot(x - 136, z - 6) > 24;
+    const add = (zone: string, x: number, z: number, route: [number, number][] | null) => this.sites.push({ id: this.sites.length, zone, x, z, route, ri: 0, gang: '', gangKey: -1, respawnAt: 0, members: [], spawned: false, lastT: 0 });
+    for (const zn of ZONES) {
+      if (!zn.gang || zn.kind === 'road') continue;
+      const [x0, z0, x1, z1] = zn.rect; const area = (x1 - x0) * (z1 - z0);
+      const want = zn.kind === 'river' ? 4 : Math.max(3, Math.min(8, Math.round(area / 1900)));
+      let got = 0;
+      for (let t = 0; t < 400 && got < want; t++) { const x = x0 + 5 + rnd() * (x1 - x0 - 10), z = z0 + 5 + rnd() * (z1 - z0 - 10); if (ok(x, z, t < 250 ? 22 : 15)) { add(zn.id, x, z, null); got++; } }
+    }
+    // roaming groups: 3 along the main road (both directions), 1 through the alleys, 1 down the shopping street
+    const road: [number, number][] = [];
+    for (let x = -180; x <= 180; x += 24) { for (const z of [-3, 3, -5, 5, 0]) if (this.nav.walkable(x, z, 0) && !this.col.solidAt(x, z, 1, 0) && (!road.length || this.nav.clear(road[road.length - 1][0], road[road.length - 1][1], x, z, 0))) { road.push([x, z]); break; } }
+    const loop = (pts: [number, number][]) => pts.length > 2 ? pts.concat(pts.slice(1, -1).reverse()) : pts;
+    if (road.length > 3) { const r = loop(road); for (let k = 0; k < 3; k++) { add('mainroad', 0, 0, r); const s = this.sites[this.sites.length - 1]; s.ri = Math.floor(k * r.length / 3); [s.x, s.z] = r[s.ri]; } }
+    for (const zid of ['alleys', 'shotengai']) {
+      const zn = ZONES.find(z => z.id === zid); if (!zn) continue; const [x0, z0, x1, z1] = zn.rect; const pts: [number, number][] = [];
+      for (let t = 0; t < 300 && pts.length < 7; t++) { const x = x0 + 3 + rnd() * (x1 - x0 - 6), z = z0 + 3 + rnd() * (z1 - z0 - 6); if (!this.nav.walkable(x, z, 0) || this.col.solidAt(x, z, 0.9, 0)) continue; const last = pts[pts.length - 1]; if (last && (Math.hypot(last[0] - x, last[1] - z) < 12 || !this.nav.clear(last[0], last[1], x, z, 0))) continue; pts.push([x, z]); }
+      if (pts.length >= 3) { const r = loop(pts); add(zid, r[0][0], r[0][1], r); }
+    }
+  }
+  /** Which gang hangs out at a site right now (hostile territory gang; friendly turf gets Stray Dogs; Gekko at night late game). */
+  private rollSiteGang(s: GangSite) {
+    const zn = ZONES.find(z => z.id === s.zone); let g = zn?.gang || 'nora'; const stage = this.storyStage();
+    if (g === 'yamikaze' && !this.isNight && Math.random() < 0.4) g = 'onigawara';
+    if (this.isNight && stage >= 8 && !this.quests.done.has('main10') && Math.random() < 0.3) g = 'gekko';
+    if (!this.gangHostile(g) && (s.route || Math.random() < 0.65)) g = 'nora';
+    s.gang = g; s.gangKey = this.friendlyGangs.size;
+  }
+  /** Alive, AUTO-targetable members of a site. */
+  siteHostiles(s: GangSite) { return s.members.filter(f => this.autoValid(f)); }
+  /** Can this (virtual or live) site currently offer a hostile group? */
+  siteReady(s: GangSite) { if (s.spawned) return s.members.some(f => this.autoValid(f)); return this.time >= s.respawnAt && !!s.gang && this.gangHostile(s.gang); }
+  activeCount() { let n = 0; for (const f of this.fighters) if (!f.isPlayer && f.alive && !f.civilian && !f.encounter) n++; return n; }
+  private updateSites() {
+    const p = this.player; const now = this.time;
+    const tut = this.quests.isActive('tutorial') || this.storyStage() === 0;
+    const encNear = [...this.encounters.values()].filter(e => !e.done && e.fighters.some(f => f.alive)).map(e => e.fighters.find(f => f.alive)!);
+    let best: GangSite | null = null, bd = 1e9;
+    for (const s of this.sites) {
+      const dt = Math.min(5, now - s.lastT); s.lastT = now;
+      if (s.spawned) {
+        const alive = s.members.filter(f => f.alive);
+        if (!alive.length) { s.spawned = false; s.members = []; s.respawnAt = now + 28 + Math.random() * 22; this.rollSiteGang(s); continue; }
+        const lead = alive.find(f => f.patrol && !f.patrol.leader) || alive[0];
+        if (s.route && lead.patrol?.route) s.ri = lead.patrol.ri || 0;
+        const d = Math.hypot(lead.x - p.x, lead.z - p.z);
+        if (d > this.siteRadius + 40 && !alive.some(f => Math.hypot(f.x - p.x, f.z - p.z) < 50)) { // player left: fold the group back into the registry
+          if (s.route) { s.x = lead.x; s.z = lead.z; }
+          for (const f of alive) { this.despawn(f); f.siteId = -1; } s.members = []; s.spawned = false;
+        }
+        continue;
+      }
+      if (s.gangKey !== this.friendlyGangs.size || !s.gang) this.rollSiteGang(s);
+      if (s.route && s.route.length) { // virtual roaming: keep walking the route while unloaded
+        let step = dt * 1.25, guard = 0;
+        while (step > 1e-4 && guard++ < 8) { const w = s.route[s.ri]; const dx = w[0] - s.x, dz = w[1] - s.z, dl = Math.hypot(dx, dz); if (dl <= step) { s.x = w[0]; s.z = w[1]; step -= dl; s.ri = (s.ri + 1) % s.route.length; } else { s.x += dx / dl * step; s.z += dz / dl * step; step = 0; } }
+      }
+      if (tut || now < s.respawnAt || p.layer !== 0 || this.dialogue) continue;
+      const d = Math.hypot(s.x - p.x, s.z - p.z);
+      if (d > this.siteRadius || encNear.some(f => Math.hypot(f.x - s.x, f.z - s.z) < 40)) continue;
+      if (d < bd) { bd = d; best = s; }
+    }
+    // materialise at most one group per tick (spreads the rig-building cost), within the active-fighter budget
+    if (best && this.activeCount() + 3 <= this.maxActive) this.materialize(best);
+    else if (best) { // at the cap: recycle the farthest idle group behind the player so the street ahead can fill up
+      let far: GangSite | null = null, fd = 85;
+      for (const s of this.sites) { if (!s.spawned) continue; const alive = s.members.filter(f => f.alive); if (!alive.length || alive.some(f => f.aggro || Math.hypot(f.x - p.x, f.z - p.z) < 60)) continue; const d = Math.hypot(alive[0].x - p.x, alive[0].z - p.z); if (d > fd && d > bd + 20) { fd = d; far = s; } }
+      if (far) { const alive = far.members.filter(f => f.alive); if (far.route) { far.x = alive[0].x; far.z = alive[0].z; } for (const f of alive) { this.despawn(f); f.siteId = -1; } far.members = []; far.spawned = false; }
+    }
+  }
+  materialize(s: GangSite) {
+    if (!s.gang) this.rollSiteGang(s);
+    const hostile = this.gangHostile(s.gang); const stage = this.storyStage(); const plv = this.progress.level;
+    const n = Math.min(this.maxActive - this.activeCount(), stage <= 1 ? 2 + Math.floor(Math.random() * 3) : 3 + Math.floor(Math.random() * 3) + (this.isNight ? 1 : 0));
+    if (n < 2) return;
+    const gid = 'site' + s.id + '_' + this.time.toFixed(1); const patrol = !!s.route || (hostile && Math.random() < 0.4); let leader: Fighter | null = null; const fs: Fighter[] = [];
+    for (let i = 0; i < n; i++) {
+      const [fx, fz] = this.freeSpot(s.x, s.z, 2.5 + n * 0.3);
+      const mid = (plv >= 3 || stage >= 2) && i === 0 && Math.random() < 0.5;
+      const f = this.makeFighter({ gang: s.gang, tier: mid ? 'mid' : 'grunt', x: fx, z: fz, variant: mid && Math.random() < 0.55 ? 'leader' : undefined });
+      f.hostileToPlayer = hostile; f.loiter = true; f.faceTo(s.x, s.z); f.group = gid; f.siteId = s.id; fs.push(f);
+      if (patrol) { if (!leader) { leader = f; f.patrol = { leader: null, tx: fx, tz: fz, zone: s.zone, ox: 0, oz: 0, route: s.route, ri: s.route ? (s.ri + 1) % s.route.length : 0, rt: 0 }; } else f.patrol = { leader, tx: 0, tz: 0, zone: s.zone, ox: fx - leader.x, oz: fz - leader.z }; }
+    }
+    s.members = fs; s.spawned = true; this.emit('siteSpawn', { id: s.id, n });
+  }
   /** Leader aura + patrol walking for non-aggro gang squads. */
   private updateSquads(dt: number) {
     this.squadT -= dt;
@@ -217,7 +317,11 @@ export class World {
       if (pt.leader && !pt.leader.alive) { f.patrol = null; continue; }
       let gx: number, gz: number;
       if (pt.leader) { gx = pt.leader.x + pt.ox; gz = pt.leader.z + pt.oz; }
-      else {
+      else if (pt.route && pt.route.length) {
+        let w = pt.route[pt.ri || 0]; pt.rt = (pt.rt || 0) + dt;
+        if (Math.hypot(w[0] - f.x, w[1] - f.z) < 2 || pt.rt > 25) { pt.ri = ((pt.ri || 0) + 1) % pt.route.length; pt.rt = 0; w = pt.route[pt.ri]; }
+        gx = w[0]; gz = w[1];
+      } else {
         if (Math.hypot(pt.tx - f.x, pt.tz - f.z) < 1.5 || Math.random() < dt * 0.05) {
           const zn = ZONES.find(z => z.id === pt.zone); const [x0, z0, x1, z1] = zn ? zn.rect : [f.x - 20, f.z - 20, f.x + 20, f.z + 20];
           for (let k = 0; k < 8; k++) { const c = this.nav.randomOpen(f.x, f.z, 22, f.layer, Math.random); if (c && c[0] > x0 && c[0] < x1 && c[1] > z0 && c[1] < z1 && this.nav.clear(f.x, f.z, c[0], c[1], f.layer)) { pt.tx = c[0]; pt.tz = c[1]; break; } }
@@ -330,7 +434,7 @@ export class World {
     if (this.buffered) { this.buffered.t -= dt; if (this.buffered.t <= 0) this.buffered = null; }
   }
   setAuto(on: boolean, silent = false) {
-    this.auto = on; this.autoTarget = null; this.autoPath = null; this.autoRetargetT = 0; this.autoInRange = false; this.autoStatus = on ? 'seek' : 'off'; this.autoNoTargetT = 0;
+    this.auto = on; this.autoTarget = null; this.autoPath = null; this.autoRetargetT = 0; this.autoInRange = false; this.autoStatus = on ? 'seek' : 'off'; this.autoNoTargetT = 0; this.autoFar = null; this.autoFarT = 0; this.autoForceT = 0; this.autoBan.clear(); this.autoStk.n = 0;
     if (!on) this.player.faceYaw = null;
     if (!silent) this.emit('autoToggle', { on });
   }
@@ -339,12 +443,86 @@ export class World {
   autoPick(): Fighter | null {
     const p = this.player; let best: Fighter | null = null, bs = 1e9;
     for (const f of this.fighters) {
-      if (!this.autoValid(f)) continue; const d = f.distTo(p);
+      if (!this.autoValid(f) || this.banned('f:' + f.id)) continue; const d = f.distTo(p);
       const quest = !!f.encounter; if (d > (quest ? 70 : 45)) continue;
       const s = d - (quest ? 30 : 0) - (f.phases ? 8 : 0) - (f.aggro && f.ai?.target === p ? 10 : 0) - (f === this.autoTarget ? 3 : 0);
       if (s < bs) { bs = s; best = f; }
     }
     return best;
+  }
+  private banned(key: string) { const t = this.autoBan.get(key); return t !== undefined && t > this.time; }
+  /** Long-range AUTO goals, city-wide: the tracked quest fight, gang sites (live or virtual) and any distant hostile. Lower score = better. */
+  autoFarCandidates(): { key: string; x: number; z: number; score: number }[] {
+    const p = this.player; const out: { key: string; x: number; z: number; score: number }[] = [];
+    const push = (key: string, x: number, z: number, bonus = 0) => { if (!this.banned(key)) out.push({ key, x, z, score: Math.hypot(x - p.x, z - p.z) - bonus }); };
+    // the tracked quest's fight wins unless something is much closer
+    const q = this.quests; const a = q.active.find(x => x.id === q.tracked) || q.active[0]; const s = a ? q.step(a) : null;
+    if (a && s && (s.kind === 'defeat' || s.kind === 'boss')) {
+      const e = ENCOUNTERS[s.enc]; const pl = PLACES[e.place]; const st = this.encounters.get(s.enc);
+      if (!(pl.layer || 0) && (!e.night || this.isNight)) {
+        if (!st) push('q:' + s.enc, pl.pos[0], pl.pos[1], 80);
+        else if (!st.done) { const f = st.fighters.filter(f => this.autoValid(f)).sort((u, v) => u.distTo(p) - v.distTo(p))[0]; if (f) push('q:' + s.enc, f.x, f.z, 80); }
+      }
+    }
+    if (this.sitesOn) for (const st of this.sites) {
+      if (!this.siteReady(st)) continue;
+      if (st.spawned) { const f = this.siteHostiles(st).sort((u, v) => u.distTo(p) - v.distTo(p))[0]; if (f) push('s:' + st.id, f.x, f.z); }
+      else push('s:' + st.id, st.x, st.z);
+    }
+    for (const f of this.fighters) if (f.siteId < 0 && !f.encounter && this.autoValid(f)) push('f:' + f.id, f.x, f.z);
+    return out.sort((u, v) => u.score - v.score);
+  }
+  /** No hostile in the local radius: walk (sprint) to the best far goal with grid A*, re-evaluating every 2.5 s. Returns false if nothing exists. */
+  private autoTravel(dt: number): boolean {
+    const p = this.player; if (p.layer !== 0) return false;
+    this.autoFarT -= dt; this.autoForceT -= dt;
+    if (!this.autoFar || this.autoFarT <= 0) {
+      this.autoFarT = 2.5; const cs = this.autoFarCandidates(); const cur = this.autoFar && cs.find(c => c.key === this.autoFar!.key);
+      const best = cs[0];
+      if (!best) this.autoFar = null;
+      else if (!cur || (best.key !== cur.key && best.score < cur.score - 15)) { // new goal (first pick, goal gone/banned, or a clearly closer group appeared)
+        const d0 = Math.hypot(best.x - p.x, best.z - p.z);
+        if (this.autoFar?.key !== best.key) this.emit('autoTravel', { key: best.key, dist: d0 });
+        this.autoFar = { key: best.key, x: best.x, z: best.z, t0: this.time, d0 }; this.autoPath = null; this.autoRepathT = 0; this.autoStk.n = 0;
+      } else { const af = this.autoFar!; if (Math.hypot(cur.x - af.x, cur.z - af.z) > Math.max(6, 0.1 * Math.hypot(af.x - p.x, af.z - p.z))) { this.autoPath = null; } af.x = cur.x; af.z = cur.z; }
+    }
+    const g = this.autoFar;
+    if (!g) {
+      // truly nothing hostile anywhere: wake the nearest gang site so there is always something to find
+      if (this.sitesOn && this.autoForceT <= 0 && this.storyStage() > 0) {
+        this.autoForceT = 5; const cands = this.sites.filter(s => !s.spawned && !this.banned('s:' + s.id)).sort((u, v) => Math.hypot(u.x - p.x, u.z - p.z) - Math.hypot(v.x - p.x, v.z - p.z));
+        const s = cands.find(s => Math.hypot(s.x - p.x, s.z - p.z) > 35) || cands[0];
+        if (!s) this.autoBan.clear(); else { s.respawnAt = this.time; if (!this.gangHostile(s.gang)) { s.gang = 'nora'; s.gangKey = this.friendlyGangs.size; } this.autoFarT = 0; this.emit('autoForced', { id: s.id }); }
+      }
+      return false;
+    }
+    const d = Math.hypot(g.x - p.x, g.z - p.z); this.autoFarDist = d; this.autoFarDir = Math.atan2(g.x - p.x, g.z - p.z); this.autoStatus = 'travel';
+    // arrived at an empty (not yet materialised) spot or took far too long -> ban it and pick another
+    const timeout = this.time - g.t0 > 40 + g.d0 / 2;
+    if ((d < 5 && g.key.startsWith('s:') && !this.sites[+g.key.slice(2)]?.spawned) || timeout) { this.autoBan.set(g.key, this.time + (timeout ? 60 : 25)); this.autoFar = null; this.autoFarT = 0; this.emit('autoGiveUp', { key: g.key, why: timeout ? 'timeout' : 'empty' }); return true; }
+    if (!this.autoPath || this.autoRepathT <= 0) {
+      this.autoRepathT = 12; // long A* is ~10-45 ms: re-plan only when the goal moves, we get stuck, or as a slow safety refresh
+      const fp = this.nav.findPath(p.x, p.z, g.x, g.z, 0, 170000);
+      if (!fp) { this.autoBan.set(g.key, this.time + 60); this.autoFar = null; this.autoFarT = 0; this.autoPath = null; this.emit('autoGiveUp', { key: g.key, why: 'unreachable' }); return true; }
+      this.autoPath = fp;
+    }
+    if (this.autoStuck(dt, g.key) || !this.autoPath) return true; // (a stuck strike clears the path: re-plan next frame)
+    const path = this.autoPath; while (path.length > 1 && Math.hypot(path[0][0] - p.x, path[0][1] - p.z) < 1.1) path.shift();
+    const [wx, wz] = path[0]; const dx = wx - p.x, dz = wz - p.z, dl = Math.hypot(dx, dz) || 1;
+    p.intentX = dx / dl; p.intentZ = dz / dl; p.wantSprint = p.stamina > (p.wantSprint ? 12 : 35); p.faceYaw = null;
+    return true;
+  }
+  /** Stuck detector: < 0.9 m progress per 1.5 s while walking -> repath; 3 strikes -> ban that goal for a while. */
+  private autoStuck(dt: number, key: string): boolean {
+    const p = this.player, s = this.autoStk;
+    if (s.key !== key) { s.key = key; s.n = 0; s.t = 0; s.x = p.x; s.z = p.z; }
+    if (!p.canAct || p.state === 'hitstun' || p.state === 'knockdown') { s.t = 0; s.x = p.x; s.z = p.z; return false; }
+    s.t += dt; if (s.t < 1.5) return false;
+    const moved = Math.hypot(p.x - s.x, p.z - s.z); s.t = 0; s.x = p.x; s.z = p.z;
+    if (moved > 0.9) { s.n = Math.max(0, s.n - 1); return false; }
+    s.n++; this.autoPath = null; this.autoRepathT = 0; this.emit('autoStuck', { key, n: s.n });
+    if (s.n >= 3) { this.autoBan.set(key, this.time + 45); s.n = 0; if (this.autoFar?.key === key) { this.autoFar = null; this.autoFarT = 0; } if (this.autoTarget && key === 'f:' + this.autoTarget.id) { this.autoTarget = null; this.autoRetargetT = 0; } this.emit('autoGiveUp', { key, why: 'stuck' }); return true; }
+    return false;
   }
   currentTarget(): Fighter | null { if (this.auto && this.autoTarget?.alive) return this.autoTarget; const p = this.player; return this.lockTarget(p, 9); }
   private autoStep(dt: number, input: Input) {
@@ -354,7 +532,9 @@ export class World {
     }
     const t = this.autoTarget;
     if (!t) {
-      this.autoStatus = 'none'; this.autoInRange = false; this.autoNoTargetT -= dt;
+      this.autoInRange = false; if (this.autoTravel(dt)) return;
+      p.intentX = p.intentZ = 0; p.wantSprint = false; this.autoFar = null;
+      this.autoStatus = 'none'; this.autoNoTargetT -= dt;
       if (this.autoNoTargetT <= 0) { this.autoNoTargetT = 6; const o = this.quests.objective(); this.emit('autoNoTarget', { dir: o ? Math.atan2(o.pos[0] - p.x, o.pos[1] - p.z) : null, dist: o ? Math.hypot(o.pos[0] - p.x, o.pos[1] - p.z) : 0, text: o?.text || '' }); }
       return;
     }
@@ -363,7 +543,8 @@ export class World {
       this.autoInRange = true; this.autoStatus = 'engage'; p.intentX = p.intentZ = 0; p.wantSprint = false;
       p.faceYaw = Math.atan2(t.x - p.x, t.z - p.z); this.autoPath = null; return;
     }
-    this.autoInRange = false; this.autoStatus = 'seek';
+    this.autoInRange = false; this.autoStatus = 'seek'; this.autoFar = null;
+    if (d > 5 && this.autoStuck(dt, 'f:' + t.id)) return;
     // path: straight if clear, otherwise grid A* (re-planned when the target moves or every 1.2 s)
     const moved = Math.hypot(t.x - this.autoLastXZ[0], t.z - this.autoLastXZ[1]) > 2.5;
     if (!this.autoPath || this.autoRepathT <= 0 || moved) {
@@ -481,7 +662,7 @@ export class World {
     this.habits.update(dt, p.state === 'block');
     for (const f of this.fighters) {
       f.slowmo = f.isPlayer ? 1 : slow;
-      if (f.ai && !f.civilian) { if (f.aggro || f.feud) f.ai.update(dt, this); else { f.intentX = f.intentZ = 0; f.wantBlock = false; f.faceYaw = null; } }
+      if (f.ai && !f.civilian) { if (f.aggro || f.feud) { if (Math.abs(f.x - p.x) + Math.abs(f.z - p.z) < 40) { if (f.aiAcc) { f.ai.update(dt + f.aiAcc, this); f.aiAcc = 0; } else f.ai.update(dt, this); } else { f.aiAcc += dt; if (++f.aiTick % 4 === 0) { f.ai.update(f.aiAcc, this); f.aiAcc = 0; } } } else { f.intentX = f.intentZ = 0; f.wantBlock = false; f.faceYaw = null; } }
     }
     this.updateSquads(dt);
     for (const f of this.fighters) this.combat.update(f, dt);
@@ -519,6 +700,7 @@ export class World {
     if (this.downT > 0) { this.downT -= dt; if (this.downT <= 0) this.respawn(); }
     // world systems
     this.spawnTimer -= dt; if (this.spawnTimer <= 0) { this.spawnTimer = 2; this.ambientSpawn(); }
+    if (this.sitesOn) { this.siteT -= dt; if (this.siteT <= 0) { this.siteT = 0.5; this.updateSites(); } }
     this.updateAggro(); this.updateStreetEvent(dt); this.quests.update(dt);
     const fights: [number, number][] = []; for (const f of this.fighters) if (f.aggro && f.alive && fights.length < 6) fights.push([f.x, f.z]);
     if (fights.length) this.lastCombatT = this.time;
@@ -563,7 +745,7 @@ export class World {
     if (d.stats) Object.assign(this.stats, d.stats); this.playTime = d.playTime || 0;
     this.bestiary = new Set(d.bestiary || d.bosses || []); this.setAuto(!!d.auto, true);
     for (const f of this.fighters) if (!f.isPlayer) this.despawn(f);
-    this.fighters = [this.player]; this.encounters.clear(); this.event = null; this.dialogue = null; this.coord.clear();
+    this.fighters = [this.player]; for (const s of this.sites) { s.members = []; s.spawned = false; } this.encounters.clear(); this.event = null; this.dialogue = null; this.coord.clear();
     this.quests.load(d.quests);
     const p = this.player; p.layer = d.player.layer || 0; const [x, z] = this.col.resolve(d.player.x, d.player.z, p.radius, p.layer); p.x = p.px = x; p.z = p.pz = z; p.yaw = d.player.yaw || 0;
     this.refreshPlayerStats(false); p.hp = clamp(d.player.hp, 1, p.maxHp); p.stamina = isFinite(d.player.stamina) ? d.player.stamina : p.maxStamina; p.meter = d.player.meter || 0; p.setState('idle'); p.appearance = this.custom;
