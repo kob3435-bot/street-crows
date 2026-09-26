@@ -176,7 +176,7 @@ export const CHARACTERS: Character[] = [
   { id: 'akagi', jp: '赤城虎鉄', name: T('อาคางิ โคเท็ตสึ', 'Kotetsu Akagi'), nickname: T('ยักษ์แดง', 'Red Oni'), age: 20, gang: 'onigawara', role: T('ศิษย์เก่าโอนิงาวาระ / มือปราบที่โมงามิจ้างมา', 'Onigawara alumnus, the muscle Mogami hired'),
     personality: T('หัวเราะดัง ชอบโชว์ เชื่อว่าเงินกับกำลังคือทุกอย่าง', 'Loud laugh, loves an audience, believes money and muscle are everything'), backstory: T('เคยเป็นเบอร์หนึ่งโอนิงาวาระเมื่อสามปีก่อน ตอนนี้ทำงานทวงหนี้ กลับมาเพราะได้ยินว่าย่านการค้า "ไม่มีเจ้าของ" แล้ว', 'Onigawara\'s number one three years ago, now a debt collector. Came back when he heard the arcade "has no owner" anymore.'),
     relations: { mogami: 'ลูกค้า / client', haru: 'ขวางทางทำเงิน / in the way of money' }, power: 80, style: T('บุกตรงๆ โขกหัวสองจังหวะ', 'Straight-line rushdown, double headbutts'), signature: T('รถไฟยักษ์แดง', 'Red Oni Express'),
-    strengths: T('ทนมาก บุกหนัก', 'Huge endurance, heavy rush'), weaknesses: T('ชอบโชว์จนเปิดช่อง', 'Showboats and leaves gaps'), tier: 'boss', fightable: true, hp: 820, atk: 17, def: 14, lvl: 8,
+    strengths: T('ทนมาก บุกหนัก', 'Huge endurance, heavy rush'), weaknesses: T('ชอบโชว์จนเปิดช่อง', 'Showboats and leaves gaps'), tier: 'boss', fightable: true, hp: 740, atk: 17, def: 14, lvl: 8,
     ai: ai('boss', { aggression: 0.8, blockRate: 0.3, dodgeRate: 0.1, counterRate: 0.25, speed: 1.0, grabRate: 0.25, patience: 1.6 }), moves: ['jab', 'jab2', 'heavy', 'headbutt', 'grab'], special: 'sp_redoni',
     phases: [
       { name: T('ทวงหนี้', 'Collections'), ai: {}, moves: ['jab', 'jab2', 'heavy', 'grab'], special: 'sp_redoni', taunt: T('ดอกเบี้ยวันนี้คือฟันของแก!', 'Today\'s interest is your teeth!') },

@@ -469,7 +469,7 @@ export class World {
   step(dt: number, input: Input | null) {
     if (this.paused) return;
     this.time += dt; this.playTime += dt;
-    const p = this.player;
+    const p = this.player; this.coord.gentle = !this.quests.done.has('tutorial');
     for (const f of this.fighters) { f.px = f.x; f.pz = f.z; }
     if (input) this.playerInput(input, dt);
     const frozen = !!this.dialogue || this.menuOpen;

@@ -58,7 +58,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #111; font-f
 #tags { position: absolute; inset: 0; overflow: hidden; }
 .tag { position: absolute; transform: translate(-50%, -100%); text-align: center; white-space: nowrap; }
 .tag .tn { font-size: 11px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; }
-.tag .th { width: 64px; height: 6px; background: rgba(0,0,0,.6); border: 1px solid #000; margin: 1px auto 0; } .tag .th i { display: block; height: 100%; background: #ff4a4a; }
+.tag .th { width: 46px; height: 5px; background: rgba(0,0,0,.6); border: 1px solid #000; margin: 1px auto 0; } .tag .th i { display: block; height: 100%; background: #ff4a4a; }
+.tag.nn .tn { display: none; } .tag.tgt .tn { color: #ffd23a; font-size: 12px; } .tag.tgt .th { width: 62px; height: 6px; border-color: #ffd23a; } .tag.far .tn { font-size: 10px; }
 .tag.friendly .th i { background: #6ad06a; }
 .bubble { position: absolute; transform: translate(-50%, -100%); background: #fff; border: 2px solid #111; border-radius: 14px; padding: 3px 9px; font-size: 13px; font-weight: 700; white-space: nowrap; box-shadow: 2px 2px 0 #111; }
 .bubble::after { content: ''; position: absolute; left: 50%; bottom: -8px; border: 6px solid transparent; border-top-color: #111; transform: translateX(-50%); }
@@ -67,8 +68,14 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #111; font-f
 #chat { position: absolute; left: 14px; bottom: 16px; width: min(330px, 50vw); font-size: 12px; color: #fff; text-shadow: 1px 1px 0 #000; }
 #chat div { background: rgba(0,0,0,.35); padding: 2px 6px; margin-top: 2px; animation: fadeout 9s forwards; } #chat b { color: #8fd0ff; }
 @keyframes fadeout { 80% { opacity: 1; } 100% { opacity: 0; } }
-#hint { position: absolute; left: 14px; top: 160px; max-width: 300px; padding: 8px 12px; font-size: 13px; display: none; line-height: 1.35; }
-#hint h5 { margin: 0 0 3px; color: var(--red); font-size: 13px; }
+#hint { position: absolute; left: 50%; top: 90px; transform: translateX(-50%); width: max-content; max-width: min(640px, 60vw); padding: 5px 12px 6px; font-size: 12.5px; display: none; line-height: 1.75; text-align: center; pointer-events: auto; cursor: pointer; z-index: 3; }
+#hint h5 { margin: 0 0 1px; color: var(--red); font-size: 12.5px; display: flex; justify-content: center; gap: 10px; align-items: center; }
+#hint h5 .x { color: #888; font-size: 11px; font-weight: 400; }
+#hint kbd, #prompt kbd, #keys kbd { font-style: normal; }
+kbd.k-kbm { background: var(--ink); color: #fff; padding: 0 5px; border-radius: 3px; font-size: 11px; margin: 0 1px; }
+kbd.k-pad { background: #2a2c34; color: #fff; padding: 0 6px; border-radius: 9px; font-size: 11px; font-weight: 700; margin: 0 1px; }
+kbd.k-touch { background: #fbf8f0; color: #111; border: 2px solid #111; padding: 0 6px; border-radius: 10px; font-size: 11px; font-weight: 800; margin: 0 1px; box-shadow: 1px 1px 0 #111; font-family: var(--b), var(--f); }
+#hint kbd.k-touch + kbd.k-touch { margin-left: 2px; }
 #fps { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); font-size: 10px; color: #fff; opacity: .6; }
 #fade { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .5s; display: flex; align-items: center; justify-content: center; }
 #fade.on { opacity: .85; } #fade span { font-family: var(--b), var(--f); color: #fff; font-size: 40px; text-shadow: 3px 3px 0 var(--red); }
@@ -136,7 +143,7 @@ kbd { background: var(--ink); color: #fff; padding: 0 6px; font-family: var(--b)
 #touch .top .tb { position: relative; width: 48px; height: 48px; font-size: 13px; }
 @media (max-width: 760px), (max-height: 520px) {
   #minimap { width: 118px; height: 118px; } .hud-tl { width: 46vw; } .quest { font-size: 11px; width: 42vw; } .pname { font-size: 14px; } #boss { width: 70vw; top: 60px; } #boss .bn { font-size: 15px; }
-  #dialogue .txt { font-size: 15px; } .toast { font-size: 22px; } .toast.small { font-size: 14px; } #chat { display: none; } #hint { top: auto; bottom: 46%; font-size: 11px; max-width: 46vw; }
+  #dialogue .txt { font-size: 15px; } .toast { font-size: 22px; } .toast.small { font-size: 14px; } #chat { display: none; } #hint { font-size: 11px; line-height: 1.8; max-width: calc(100vw - 150px); padding: 4px 8px 5px; } #hint h5 { font-size: 11px; }
   .grid2 { grid-template-columns: 1fr; } .mbody { padding: 10px; } .tabs button { font-size: 12px; padding: 5px 8px; }
   #title { padding-left: 5vw; } #title .tbtns { min-width: 200px; } #title .tbtns .btn { font-size: 15px; padding: 5px 10px; }
 }
@@ -144,7 +151,8 @@ kbd { background: var(--ink); color: #fff; padding: 0 6px; font-family: var(--b)
 body:not(.ingame) #hud, body:not(.ingame) #touch { display: none !important; }
 #keys { position: absolute; left: 12px; bottom: 10px; color: #fff; font-size: 12px; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; opacity: .85; }
 #keys kbd { background: #fff; color: #111; border: 1px solid #111; padding: 0 4px; font-family: var(--f); font-size: 11px; margin: 0 2px; }
-body.touchmode #keys { display: none; }
+body.touchmode #keys, body.dev-touch #keys { display: none; }
+#keys kbd.k-kbm, #keys kbd.k-pad { border: 1px solid #111; }
 
 @media (orientation: portrait) { body.touchmode #touch .top { right: auto; left: 10px; top: 188px; flex-direction: column; } }
 @media (orientation: landscape) and (max-height: 520px) { body.touchmode #h-quest { position: fixed; left: 12px; top: 150px; width: 30vw; right: auto; } body.touchmode #h-zone { display: none; } }
@@ -152,3 +160,7 @@ body.touchmode #keys { display: none; }
 #h-auto { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: none; background: rgba(20,24,32,.82); color: #7fe0ff; border: 2px solid #1fb6e8; border-radius: 14px; padding: 3px 12px; font-weight: 800; font-size: 13px; white-space: nowrap; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 #h-auto.eng { color: #fff; background: rgba(31,182,232,.85); }
 body.touchmode #h-auto { left: auto; right: max(12px, env(safe-area-inset-right)); transform: none; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 256px); max-width: 60vw; }
+#prompt kbd.k-touch { background: #fbf8f0; color: #111; border: 2px solid #111; border-radius: 10px; font-family: var(--f); font-size: 14px; }
+#prompt kbd.k-pad, #keys kbd.k-pad { background: #2a2c34; color: #fff; border-radius: 9px; }
+body.hint-top #h-quest, body.hint-top #h-zone { visibility: hidden; }
+body.dev-touch #hint h5 { display: inline-flex; margin: 0 6px 0 0; vertical-align: middle; } body.dev-touch #hint h5 + div { display: inline; } body.dev-touch kbd.k-touch { padding: 0 4px; font-size: 10.5px; }

@@ -178,7 +178,7 @@ export class GameRenderer {
   /** Debug/test: is the camera inside a solid it should not be inside (non-cut solid, or an un-cut building)? */
   camInsideSolid(): boolean {
     const c = this.camera.position; if (this.world.col.pointInSolid(c.x, c.y, c.z, true)) return true;
-    for (const inf of this.city.binfos) { const b = inf.b; if (c.x > b.x0 && c.x < b.x1 && c.z > b.z0 && c.z < b.z1 && c.y < b.h * inf.cur) return true; }
+    for (const inf of this.city.binfos) { const b = inf.b; if (c.x > b.x0 && c.x < b.x1 && c.z > b.z0 && c.z < b.z1 && c.y < b.h && inf.cur > 0.6) return true; } // faded buildings are see-through
     return false;
   }
   private updateLighting() {

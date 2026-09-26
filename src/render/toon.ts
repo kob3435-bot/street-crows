@@ -90,3 +90,28 @@ export function canvasTexture(w: number, h: number, draw: (c: CanvasRenderingCon
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const c = cv.getContext('2d')!; draw(c);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
 }
+
+/**
+ * Screen-door (ordered-dither) fade for instanced meshes: geometry carries a per-instance `aFade` attribute
+ * (1 = opaque). Fragments are discarded against a 4x4 Bayer matrix, so faded occluders stay in the opaque
+ * pass (no sorting issues) and read as see-through.
+ */
+function injectFade(sh: any) {
+  sh.vertexShader = 'attribute float aFade;\nvarying float vFade;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vFade = aFade;');
+  sh.fragmentShader = 'varying float vFade;\nfloat fadeB2(vec2 a) { a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }\nfloat fadeB4(vec2 a) { return fadeB2(0.5 * a) * 0.25 + fadeB2(a); }\n'
+    + sh.fragmentShader.replace('void main() {', 'void main() {\n  if (vFade < 0.995 && fadeB4(gl_FragCoord.xy) >= vFade) discard;');
+}
+const fadeCache = new Map<string, THREE.Material>();
+export function fadeable<M extends THREE.Material>(mat: M): M {
+  let f = fadeCache.get(mat.uuid) as M | undefined;
+  if (!f) {
+    f = mat.clone() as M; const orig = mat; const key = 'F|' + orig.customProgramCacheKey();
+    f.onBeforeCompile = (sh: any, r: any) => { orig.onBeforeCompile(sh, r); injectFade(sh); };
+    f.customProgramCacheKey = () => key; fadeCache.set(mat.uuid, f);
+  }
+  return f;
+}
+/** Clone a geometry for one instanced mesh and give it a per-instance fade attribute (all opaque). */
+export function fadeGeometry(geo: THREE.BufferGeometry, n: number) {
+  const g = geo.clone(); const a = new THREE.InstancedBufferAttribute(new Float32Array(n).fill(1), 1); a.setUsage(THREE.DynamicDrawUsage); g.setAttribute('aFade', a); return { g, a };
+}

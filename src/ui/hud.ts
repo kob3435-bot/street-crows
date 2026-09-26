@@ -1,4 +1,5 @@
 import type { World } from '../sim/world';
+import { K, kbd, keysIn, getDev, onDev } from './glyphs';
 import type { GameRenderer } from '../render/renderer';
 import { tx, t, getLang } from '../core/i18n';
 import { bus } from '../core/events';
@@ -19,32 +20,68 @@ export class HUD {
   root: HTMLElement; mm: HTMLCanvasElement; mmc: CanvasRenderingContext2D; mapImg: HTMLCanvasElement; tags: HTMLElement; tagPool: HTMLElement[] = []; bubblePool: HTMLElement[] = [];
   private q = (s: string) => this.root.querySelector(s) as HTMLElement; private slowT = 0; hintsSeen = new Set<string>(); hintT = 0; crowdBubbles: { x: number; z: number; text: string; t: number }[] = [];
   constructor(parent: HTMLElement, private w: World, private r: GameRenderer) {
-    this.root = el(`<div id="hud">
+    this.root = el(`<div id="hud"><div id="tags"></div>
       <div class="hud-tl">
         <div class="hud-name"><span class="lvl" id="h-lvl">Lv1</span><div><div class="pname">ฮารุ โบยะ <span class="ptitle" id="h-title"></span></div></div></div>
         <div class="bar hp"><b id="h-hpb"></b><i id="h-hp"></i><span id="h-hpt"></span></div>
         <div class="bar st"><i id="h-st"></i></div>
-        <div class="bar sp" id="h-spw"><i id="h-sp"></i><span>R</span></div>
+        <div class="bar sp" id="h-spw"><i id="h-sp"></i><span id="h-spk">R</span></div>
         <div class="bar xp"><i id="h-xp"></i></div>
         <div class="hud-meta"><span>${t('rep')}: <b id="h-rep"></b></span><span>¥<b id="h-money"></b></span><span id="h-items"></span></div>
       </div>
       <div class="hud-tr"><canvas id="minimap" width="200" height="200"></canvas><div class="zone" id="h-zone"></div><div class="quest" id="h-quest"></div></div>
       <div id="boss"><div class="bn" id="b-name"></div><div class="bar"><b id="b-hpb"></b><i id="b-hp"></i></div><div class="phases" id="b-ph"></div></div>
       <div id="combo"><b id="c-n">0</b><span>${t('hits')}</span></div>
-      <div id="tags"></div><div id="toasts"></div><div id="h-auto"></div>
+      <div id="toasts"></div><div id="h-auto"></div>
       <div id="prompt" class="panel"></div>
       <div id="hint" class="panel"></div>
-      <div id="chat"></div><div id="fps"></div><div id="keys"><kbd>Tab</kbd>${t('menu')} <kbd>M</kbd>${t('map')} <kbd>H</kbd>${t('controls')} <kbd>E</kbd>${t('interactKey')} <kbd>T</kbd>AUTO <kbd>Wheel</kbd>${T('ซูม', 'Zoom')}</div>
+      <div id="chat"></div><div id="fps"></div><div id="keys"></div>
       <div id="fade"><span></span></div>
     </div>`);
     parent.appendChild(this.root);
     this.mm = this.q('#minimap') as HTMLCanvasElement; this.mmc = this.mm.getContext('2d')!; this.tags = this.q('#tags');
     this.mapImg = renderMapImage(w, 1);
-    this.bind();
+    this.bind(); this.renderKeys(); onDev(() => { this.renderKeys(); this.refreshHint(); const d = document.getElementById('dialogue'); if (d) d.dataset.key = ''; });
+    const h = this.q('#hint'); h.addEventListener('pointerdown', (e) => { e.stopPropagation(); this.hideHint(); });
+  }
+  /** Bottom-left key bar: keyboard or gamepad glyphs; hidden on touch (the buttons are on screen). */
+  renderKeys() {
+    const d = getDev(); document.body.classList.toggle('dev-touch', d === 'touch'); document.body.classList.toggle('dev-pad', d === 'pad'); document.body.classList.toggle('dev-kbm', d === 'kbm');
+    this.q('#h-spk').textContent = d === 'touch' ? 'SP' : K('special');
+    const k = this.q('#keys'); if (d === 'touch') { k.innerHTML = ''; return; }
+    k.innerHTML = d === 'pad'
+      ? `${kbd('menu')}${t('menu')} ${kbd('interact')}${t('interactKey')} ${kbd('auto')}AUTO ${kbd('zoom')}${T('ซูม', 'Zoom')} ${kbd('item')}${T('ไอเทม', 'Item')}`
+      : `${kbd('menu')}${t('menu')} ${kbd('map')}${t('map')} ${kbd('help')}${t('controls')} ${kbd('interact')}${t('interactKey')} ${kbd('auto')}AUTO ${kbd('zoom')}${T('ซูม', 'Zoom')}`;
   }
   toast(text: string, cls = '') { const d = el(`<div class="toast ${cls}"></div>`); d.textContent = text; this.q('#toasts').appendChild(d); setTimeout(() => d.remove(), 2300); const all = this.q('#toasts').children; if (all.length > 4) all[0].remove(); }
-  hint(key: string, title: string, body: string) {
-    if (this.hintsSeen.has(key)) return; this.hintsSeen.add(key); const h = this.q('#hint'); h.innerHTML = `<h5>${title}</h5>${body}`; h.style.display = 'block'; this.hintT = 7;
+  private hintCur: { title: string; body: string | (() => string) } | null = null;
+  /** Compact one-time tip at top-centre under the HUD (never over the fight); auto-dismisses, tap to close. Body may be device-aware. */
+  hint(key: string, title: string, body: string | (() => string)) {
+    if (this.hintsSeen.has(key)) return; this.hintsSeen.add(key); this.hintCur = { title, body }; this.refreshHint(); this.hintT = getDev() === 'touch' ? 5.5 : 7;
+  }
+  private refreshHint() {
+    const c = this.hintCur; if (!c) return;
+    const h = this.q('#hint'); h.innerHTML = `<h5>${c.title}<span class="x">✕</span></h5><div>${typeof c.body === 'function' ? c.body() : c.body}</div>`; h.style.display = 'block'; this.placeHint();
+  }
+  hideHint() { this.hintT = 0; this.hintCur = null; this.q('#hint').style.display = 'none'; document.body.classList.remove('hint-top'); }
+  /**
+   * Hint placement, never over the fight: prefer the free band at the top between the stats panel and the minimap;
+   * otherwise (phone portrait) sit right under the stats panel, temporarily hiding the quest tracker / zone label it
+   * would cover (they return when the hint closes). Anything else it would overlap pushes it down.
+   */
+  private placeHint() {
+    const h = this.q('#hint'); if (h.style.display !== 'block') { document.body.classList.remove('hint-top'); return; }
+    const rect = (s: string) => { const e = document.querySelector(s) as HTMLElement | null; if (!e || e.offsetParent === null) return null; const r = e.getBoundingClientRect(); return r.width && r.height ? r : null; };
+    const tl = rect('.hud-tl'), mm = rect('#minimap'), boss = rect('#boss');
+    const L = (tl ? tl.right : 0) + 10, Rr = (mm ? mm.left : innerWidth) - 10; const portrait = innerHeight > innerWidth;
+    h.style.left = ''; h.style.maxWidth = ''; h.style.top = '0px';
+    const band = !portrait && Rr - L >= 250;
+    document.body.classList.toggle('hint-top', !band && getDev() === 'touch' && portrait);
+    if (band) { h.style.maxWidth = Math.round(Rr - L) + 'px'; h.style.left = Math.round((L + Rr) / 2) + 'px'; }
+    const hr = h.getBoundingClientRect(); let top = band ? 8 : (tl ? tl.bottom + 6 : 8); if (boss && boss.left < hr.right && boss.right > hr.left) top = Math.max(top, boss.bottom + 6);
+    const sel = document.body.classList.contains('hint-top') ? ['#touch .top', '#boss'] : ['.hud-tl', '#boss', '#h-quest', '#minimap', '#h-zone', '#touch .top'];
+    for (let pass = 0; pass < 2; pass++) for (const s of sel) { const r = rect(s); if (r && r.left < hr.right && r.right > hr.left && r.top < top + hr.height && r.bottom > top && r.top < innerHeight * 0.5) top = Math.max(top, r.bottom + 6); }
+    h.style.top = Math.round(Math.min(top, innerHeight * 0.42)) + 'px';
   }
   private bind() {
     const w = this.w; const T = (th: string, en: string) => tx({ th, en });
@@ -54,12 +91,16 @@ export class HUD {
     bus.on('questComplete', (e) => { this.toast(t('questDone'), 'gold'); this.toast(`${tx(e.q.title)}  +${e.exp} EXP  +${e.rep} ${t('rep')}`, 'small'); });
     bus.on('counter', (e) => this.toast(e.kind === 'dodge' ? T('หลบแล้วสวน!', 'DODGE COUNTER!') : T('การ์ดแล้วสวน!', 'BLOCK COUNTER!'), 'blue'));
     bus.on('perfectDodge', (e) => { if (e.f.isPlayer) { this.toast(t('perfect'), 'blue'); this.hint('perfect', T('หลบเพอร์เฟกต์!', 'Perfect dodge!'), T('โจมตีตอนนี้เพื่อ <b>สวนกลับ</b> แรงพิเศษ', 'Attack right now for a powerful <b>counter</b>.')); } });
-    bus.on('parry', (e) => { if (e.f.isPlayer) { this.toast(T('ปัดป้อง!', 'PARRY!'), 'blue'); this.hint('parry', T('ปัดป้อง', 'Parry'), T('กด Q ตอนหมัดกำลังมา = ปัด แล้วโจมตีทันทีเพื่อสวนกลับ', 'Press Q just before a hit lands to parry, then attack to counter.')); } });
-    bus.on('guardBreak', (e) => { if (!e.f.isPlayer) { this.toast(t('guardBreak'), 'red'); this.hint('dizzy', T('ศัตรูมึน!', 'Enemy dizzy!'), T('กด <kbd>คลิกขวา</kbd> (หมัดหนัก) ใกล้ศัตรูที่มึน = <b>ท่าปิดฉาก</b>', 'Press <kbd>RMB</kbd> (heavy) near a dizzy enemy for a <b>FINISHER</b>.')); } else this.toast(t('guardBreak'), 'red'); });
-    bus.on('dizzy', (e) => { if (!e.f.isPlayer) this.hint('dizzy', T('ศัตรูมึน!', 'Enemy dizzy!'), T('กด <kbd>คลิกขวา</kbd> (หมัดหนัก) ใกล้ศัตรูที่มึน = <b>ท่าปิดฉาก</b>', 'Press <kbd>RMB</kbd> (heavy) near a dizzy enemy for a <b>FINISHER</b>.')); });
+    bus.on('parry', (e) => { if (e.f.isPlayer) { this.toast(T('ปัดป้อง!', 'PARRY!'), 'blue'); this.hint('parry', T('ปัดป้อง', 'Parry'), () => T(`กด ${kbd('block')} ตอนหมัดกำลังมา = ปัด แล้วโจมตีทันทีเพื่อสวนกลับ`, `Press ${kbd('block')} just before a hit lands to parry, then attack to counter.`)); } });
+    bus.on('guardBreak', (e) => { if (!e.f.isPlayer) { this.toast(t('guardBreak'), 'red'); this.hint('dizzy', T('ศัตรูมึน!', 'Enemy dizzy!'), () => T(`กด ${kbd('heavy')} (หมัดหนัก) ใกล้ศัตรูที่มึน = <b>ท่าปิดฉาก</b>`, `Press ${kbd('heavy')} (heavy) near a dizzy enemy for a <b>FINISHER</b>.`)); } else this.toast(t('guardBreak'), 'red'); });
+    bus.on('dizzy', (e) => { if (!e.f.isPlayer) this.hint('dizzy', T('ศัตรูมึน!', 'Enemy dizzy!'), () => T(`กด ${kbd('heavy')} (หมัดหนัก) ใกล้ศัตรูที่มึน = <b>ท่าปิดฉาก</b>`, `Press ${kbd('heavy')} (heavy) near a dizzy enemy for a <b>FINISHER</b>.`)); });
     bus.on('finisherStart', () => this.toast(t('finisher'), 'red'));
-    bus.on('block', (e) => { if (e.att?.isPlayer && !e.f.isPlayer) this.hint('eblock', T('ศัตรูตั้งการ์ด', 'Enemy is blocking'), T('ใช้ <kbd>G</kbd> จับทุ่ม หรือ <kbd>C</kbd> เตะหนักเพื่อทำลายการ์ด', 'Use <kbd>G</kbd> grab or <kbd>C</kbd> heavy kick to break their guard.')); });
-    bus.on('aggro', () => this.hint('fight', T('เริ่มต่อสู้!', 'Fight!'), T('<kbd>คลิกซ้าย</kbd> ต่อย · <kbd>คลิกขวา</kbd> หมัดหนัก · <kbd>F</kbd> เตะ · <kbd>C</kbd> เตะหนัก<br><kbd>Space</kbd> หลบ · <kbd>Q</kbd> การ์ด · <kbd>G</kbd> จับทุ่ม · <kbd>R</kbd> ท่าพิเศษ<br>คอมโบ: P-P-หนัก / P-F-F', '<kbd>LMB</kbd> punch · <kbd>RMB</kbd> heavy · <kbd>F</kbd> kick · <kbd>C</kbd> heavy kick<br><kbd>Space</kbd> dodge · <kbd>Q</kbd> block · <kbd>G</kbd> grab · <kbd>R</kbd> special<br>Combos: P-P-Heavy / P-K-K')));
+    bus.on('block', (e) => { if (e.att?.isPlayer && !e.f.isPlayer) this.hint('eblock', T('ศัตรูตั้งการ์ด', 'Enemy is blocking'), () => T(`ใช้ ${kbd('grab')} จับทุ่ม หรือ ${kbd('hkick')} เตะหนักเพื่อทำลายการ์ด`, `Use ${kbd('grab')} grab or ${kbd('hkick')} heavy kick to break their guard.`)); });
+    bus.on('aggro', () => this.hint('fight', T('เริ่มต่อสู้!', 'Fight!'), () => {
+      const d = getDev();
+      if (d === 'touch') return T(`${kbd('punch')}${kbd('heavy')}${kbd('kick')}${kbd('hkick')} โจมตี · ${kbd('dodge')}${kbd('block')} (ค้าง) ป้องกัน<br>${kbd('grab')} ทุ่ม · ${kbd('special')} เกจเต็ม · ${kbd('auto')} เดินหาศัตรู`, `${kbd('punch')}${kbd('heavy')}${kbd('kick')}${kbd('hkick')} attack · ${kbd('dodge')}${kbd('block')} (hold) defend<br>${kbd('grab')} throw · ${kbd('special')} full meter · ${kbd('auto')} walk to foes`);
+      return T(`${kbd('punch')} ต่อย · ${kbd('heavy')} หมัดหนัก · ${kbd('kick')} เตะ · ${kbd('hkick')} เตะหนัก<br>${kbd('dodge')} หลบ · ${kbd('block')} การ์ด · ${kbd('grab')} จับทุ่ม · ${kbd('special')} ท่าพิเศษ · ${kbd('auto')} AUTO<br>คอมโบ: P-P-หนัก / P-K-K`, `${kbd('punch')} punch · ${kbd('heavy')} heavy · ${kbd('kick')} kick · ${kbd('hkick')} heavy kick<br>${kbd('dodge')} dodge · ${kbd('block')} block · ${kbd('grab')} grab · ${kbd('special')} special · ${kbd('auto')} AUTO<br>Combos: P-P-Heavy / P-K-K`);
+    }));
     bus.on('mirror', () => this.toast(T('โดนสวน! ใช้จับทุ่มแทน', 'Countered! Try a grab instead'), 'red'));
     bus.on('noMeter', () => this.toast(T('เกจพิเศษยังไม่เต็ม', 'Special meter not full'), 'small'));
     bus.on('bossPhase', (e) => { const P = e.f.phases[e.phase]; this.toast(`${e.phase === 2 ? t('final') : t('phase') + ' ' + (e.phase + 1)}: ${tx(P.name)}`, 'red'); });
@@ -72,7 +113,7 @@ export class HUD {
     bus.on('chat', (m) => { let txt = m.text; try { txt = tx(JSON.parse(m.text)); } catch {} const d = el(`<div><b></b> </div>`); (d.firstChild as HTMLElement).textContent = m.from + ':'; d.append(' ' + txt); this.q('#chat').appendChild(d); setTimeout(() => d.remove(), 9000); });
     bus.on('relation', (e) => { const c = CHAR_BY_ID[e.id]; if (c) this.toast(`${tx(c.name)} ♥ ${e.value}`, 'small'); });
     bus.on('toast', (e) => this.toast(e.text, 'small'));
-    bus.on('autoToggle', (e) => { this.toast(e.on ? T('AUTO เปิด: เดินหาศัตรูอัตโนมัติ (ต่อยเองนะ!)', 'AUTO ON: walks to enemies (you still fight!)') : T('AUTO ปิด', 'AUTO OFF'), e.on ? 'small blue' : 'small'); if (e.on) this.hint('auto', 'AUTO', T('AUTO จะเดินไปหาศัตรูที่ใกล้ที่สุดและหยุดในระยะต่อย แต่ <b>ไม่โจมตี/การ์ด/หลบให้</b> ขยับจอยหรือ WASD เพื่อควบคุมเองได้ทันที', 'AUTO walks to the nearest enemy and stops in punching range, but <b>never attacks, blocks or dodges</b>. Move the stick / WASD to take over at any time.')); });
+    bus.on('autoToggle', (e) => { this.toast(e.on ? T('AUTO เปิด: เดินหาศัตรูอัตโนมัติ (ต่อยเองนะ!)', 'AUTO ON: walks to enemies (you still fight!)') : T('AUTO ปิด', 'AUTO OFF'), e.on ? 'small blue' : 'small'); if (e.on) this.hint('auto', 'AUTO', () => T(`เดินไปหาศัตรูที่ใกล้ที่สุด หยุดในระยะต่อย แต่ <b>ไม่โจมตี/การ์ด/หลบให้</b> · ขยับ ${kbd('move')} เพื่อคุมเอง`, `Walks to the nearest enemy and stops in range, but <b>never attacks, blocks or dodges</b>. Use ${kbd('move')} to take over.`)); });
     bus.on('autoNoTarget', (e) => {
       let dir = ''; if (e.dir !== null && e.dist > 8) { const F = Math.atan2(-Math.sin(this.w.camYaw), -Math.cos(this.w.camYaw)); let rel = e.dir - F; while (rel > Math.PI) rel -= Math.PI * 2; while (rel < -Math.PI) rel += Math.PI * 2; dir = ' ' + ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'][((Math.round(-rel / (Math.PI / 4)) % 8) + 8) % 8] + ' ' + Math.round(e.dist) + 'm'; }
       this.toast(T('AUTO: ไม่มีศัตรูใกล้ๆ', 'AUTO: no enemies nearby') + (dir ? '  ' + T('เป้าหมายเควส', 'quest') + dir : ''), 'small');
@@ -87,7 +128,7 @@ export class HUD {
     this.root.classList.toggle('hidden', w.menuOpen);
     $('#h-hp').style.width = (p.hp / p.maxHp * 100) + '%'; $('#h-hpb').style.width = (p.hp / p.maxHp * 100) + '%'; $('#h-hpt').textContent = `${Math.ceil(p.hp)}/${p.maxHp}`;
     $('#h-st').style.width = (p.stamina / p.maxStamina * 100) + '%'; $('#h-sp').style.width = p.meter + '%'; $('#h-spw').classList.toggle('full', p.meter >= 100);
-    if (p.meter >= 100) this.hint('special', tx({ th: 'เกจพิเศษเต็ม!', en: 'Special ready!' }), tx({ th: 'กด <kbd>R</kbd> ใช้ "ไต้ฝุ่นขี้เกียจ" โจมตีรอบตัว', en: 'Press <kbd>R</kbd> for "Lazy Typhoon", a spinning area attack.' }));
+    if (p.meter >= 100) this.hint('special', tx({ th: 'เกจพิเศษเต็ม!', en: 'Special ready!' }), () => tx({ th: `กด ${kbd('special')} ใช้ "ไต้ฝุ่นขี้เกียจ" โจมตีรอบตัว`, en: `Press ${kbd('special')} for "Lazy Typhoon", a spinning area attack.` }));
     this.slowT -= dt;
     if (this.slowT <= 0) {
       this.slowT = 0.15;
@@ -98,10 +139,10 @@ export class HUD {
       const tod = w.nightFactor > 0.7 ? t('night') : w.clock >= 16.5 && w.clock < 20 ? t('evening') : w.clock < 11 ? t('morning') : t('day');
       $('#h-zone').innerHTML = `${p.layer === 1 ? tx({ th: 'ดาดฟ้าคุโรงาเนะ', en: 'Kurogane Rooftop' }) : tx(zn.name)}<small>${gang ? tx(gang.name) + (w.friendlyGangs.has(gang.id) ? ' ✓' : '') + ' · ' : ''}${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')} ${tod}</small>`;
       const o = w.quests.objective();
-      if (o) { const d = Math.round(Math.hypot(o.pos[0] - p.x, o.pos[1] - p.z)); $('#h-quest').style.display = 'block'; $('#h-quest').innerHTML = `<h4>${tx(o.quest.title)}</h4><p>▶ ${o.text}</p><em>${d > 3 ? d + ' m' : ''}</em>`; }
+      if (o) { const d = Math.round(Math.hypot(o.pos[0] - p.x, o.pos[1] - p.z)); $('#h-quest').style.display = 'block'; $('#h-quest').innerHTML = `<h4>${tx(o.quest.title)}</h4><p>▶ ${keysIn(o.text)}</p><em>${d > 3 ? d + ' m' : ''}</em>`; }
       else $('#h-quest').style.display = 'none';
       const it = w.interactTarget; const pr = $('#prompt');
-      if (it && !w.dialogue && !w.menuOpen) { pr.style.display = 'block'; pr.innerHTML = `<kbd>${this.touchMode ? '💬' : 'E'}</kbd>${tx(it.label)}`; } else pr.style.display = 'none';
+      if (it && !w.dialogue && !w.menuOpen) { pr.style.display = 'block'; pr.innerHTML = `${getDev() === 'touch' ? '<kbd class="k-touch">💬</kbd>' : kbd('interact')}${tx(it.label)}`; } else pr.style.display = 'none';
       $('#fps').textContent = this.showFps ? `${Math.round(this.r.fps)} fps · ${w.fighters.length} fighters · q${this.r.quality}` : '';
     }
     // boss bar
@@ -111,23 +152,35 @@ export class HUD {
       $('#b-ph').innerHTML = [0, 1, 2].map(i => `<i class="${i <= boss.phase ? 'on' : ''}"></i>`).join('') + `<span>${boss.phase === 2 ? t('final') : t('phase') + ' ' + (boss.phase + 1)} · ${tx(boss.phases![boss.phase].name)}</span>`;
     } else bb.style.display = 'none';
     const cb = $('#combo'); if (p.comboCount >= 2) { cb.style.display = 'block'; $('#c-n').textContent = String(p.comboCount); } else cb.style.display = 'none';
-    if (this.hintT > 0) { this.hintT -= dt; if (this.hintT <= 0) $('#hint').style.display = 'none'; }
+    if (this.hintT > 0) { this.hintT -= dt; if (this.hintT <= 0) this.hideHint(); else if ((this.hintPlaceT -= dt) <= 0) { this.hintPlaceT = 0.5; this.placeHint(); } }
     this.drawTags(); this.drawMinimap();
     if (w.dialogue) this.showDialogue(); else document.getElementById('dialogue')?.remove();
   }
-  touchMode = false; showFps = false;
+  touchMode = false; showFps = false; private hintPlaceT = 0; private enemyTagN = 0;
   private drawTags() {
     const w = this.w, p = w.player, r = this.r; let ti = 0, bi = 0;
     const tag = () => { let e = this.tagPool[ti]; if (!e) { e = el(`<div class="tag"><div class="tn"></div><div class="th"><i></i></div></div>`); this.tags.appendChild(e); this.tagPool.push(e); } ti++; e.style.display = 'block'; return e; };
     const bub = (x: number, y: number, z: number, text: string) => { const s = r.project(x, y, z); if (!s.vis) return; let e = this.bubblePool[bi]; if (!e) { e = el(`<div class="bubble"></div>`); this.tags.appendChild(e); this.bubblePool.push(e); } bi++; e.style.display = 'block'; e.textContent = text; e.style.left = s.x + 'px'; e.style.top = s.y + 'px'; };
+    // enemy tags, decluttered: every fighter keeps a compact HP bar; names only for the current target, ranked enemies
+    // and a few nearest ones whose label does not collide with one already placed (big groups stay readable)
+    const cur = w.currentTarget(); const cands: { f: typeof w.fighters[0]; d: number; x: number; y: number; pri: number }[] = [];
     for (const f of w.fighters) {
       if (f.isPlayer || f.layer !== p.layer) continue; const d = f.distTo(p);
       if (f.alive && (f.aggro || f.feud || d < 10) && d < 22 && !f.phases && !f.civilian) {
-        const s = r.project(f.x, f.y + 2.25 * (f.appearance?.height || 1) + f.layer * ROOF.y, f.z); if (!s.vis) continue; const e = tag();
-        e.style.left = s.x + 'px'; e.style.top = s.y + 'px'; (e.querySelector('.tn') as HTMLElement).textContent = `${f.name}${f.tier === 'mid' ? ' ★' : f.tier === 'miniboss' ? ' ★★' : ''}`;
-        (e.querySelector('.th i') as HTMLElement).style.width = (f.hp / f.maxHp * 100) + '%'; e.classList.toggle('friendly', !f.hostileToPlayer && !f.aggro && !f.feud);
+        const s = r.project(f.x, f.y + 2.25 * (f.appearance?.height || 1) + f.layer * ROOF.y, f.z); if (s.vis) cands.push({ f, d, x: s.x, y: s.y, pri: (f === cur ? 0 : f.tier === 'miniboss' ? 1 : f.tier === 'mid' ? 2 : 3) * 100 + d });
       }
       if (f.bubbleT > 0 && f.bubble && d < 30) bub(f.x, f.y + 2.5 + f.layer * ROOF.y, f.z, f.bubble === 'flee' ? tx({ th: 'หนีเร็ว!!', en: 'RUN!!' }) : f.bubble);
+    }
+    cands.sort((a, b) => a.pri - b.pri); this.enemyTagN = cands.length; const names: number[][] = []; const bars: number[][] = []; let shown = 0;
+    for (const c of cands) {
+      const f = c.f; const e = tag(); const label = `${f.name}${f.tier === 'mid' ? ' ★' : f.tier === 'miniboss' ? ' ★★' : ''}`; const isT = f === cur;
+      let y = c.y; for (let k = 0; k < 3 && bars.some(b => Math.abs(b[0] - c.x) < 44 && Math.abs(b[1] - y) < 7); k++) y -= 7; bars.push([c.x, y]);
+      const wN = label.length * 6.5 + 8, box = [c.x - wN / 2, y - 22, c.x + wN / 2, y - 8];
+      const showName = (isT || f.tier !== 'grunt' || shown < 3 || cands.length <= 3) && !names.some(n => n[0] < box[2] && n[2] > box[0] && n[1] < box[3] && n[3] > box[1]);
+      if (showName) { names.push(box); shown++; }
+      e.style.left = c.x + 'px'; e.style.top = y + 'px'; (e.querySelector('.tn') as HTMLElement).textContent = label;
+      e.classList.toggle('nn', !showName); e.classList.toggle('tgt', isT); e.classList.toggle('far', c.d > 12);
+      (e.querySelector('.th i') as HTMLElement).style.width = (f.hp / f.maxHp * 100) + '%'; e.classList.toggle('friendly', !f.hostileToPlayer && !f.aggro && !f.feud);
     }
     // simulated online players (NetworkAdapter ghosts)
     if (p.layer === 0) for (const [, rm] of w.remotes) { const d = Math.hypot(rm.x - p.x, rm.z - p.z); if (d > 25) continue; const s = r.project(rm.x, 2.3, rm.z); if (!s.vis) continue; const e = tag();
@@ -144,6 +197,7 @@ export class HUD {
     }
     this.crowdBubbles = this.crowdBubbles.filter(b => (b.t -= 1 / 60) > 0); for (const b of this.crowdBubbles) bub(b.x, 2.2, b.z, b.text);
     for (let i = ti; i < this.tagPool.length; i++) { this.tagPool[i].style.display = 'none'; (this.tagPool[i].querySelector('.th') as HTMLElement).style.display = ''; }
+    for (let i = this.enemyTagN; i < ti; i++) this.tagPool[i].classList.remove('nn', 'tgt', 'far');
     for (let i = bi; i < this.bubblePool.length; i++) this.bubblePool[i].style.display = 'none';
   }
   private hideMarker() { const m = this.tags.querySelector('.marker') as HTMLElement; if (m) m.style.display = 'none'; }
@@ -176,10 +230,10 @@ export class HUD {
       box.addEventListener('click', (e) => { if ((e.target as HTMLElement).tagName !== 'BUTTON' && !this.w.dialogue?.lines[this.w.dialogue.i]?.choices) this.w.advanceDialogue(-1); }); }
     box.dataset.key = key; box.style.display = 'block';
     (box.querySelector('.who') as HTMLElement).textContent = speakerName(line.s);
-    (box.querySelector('.txt') as HTMLElement).textContent = tx(line.t);
+    (box.querySelector('.txt') as HTMLElement).textContent = keysIn(tx(line.t));
     const ch = box.querySelector('.ch') as HTMLElement; ch.innerHTML = '';
     if (line.choices) line.choices.forEach((c, i) => { const b = document.createElement('button'); b.textContent = tx(c.t); b.onclick = (e) => { e.stopPropagation(); this.w.advanceDialogue(i); }; ch.appendChild(b); });
-    (box.querySelector('.next') as HTMLElement).textContent = line.choices ? '' : (this.touchMode ? tx({ th: 'แตะเพื่อไปต่อ ▶', en: 'Tap to continue ▶' }) : tx({ th: 'E / คลิก ▶', en: 'E / Click ▶' }));
+    (box.querySelector('.next') as HTMLElement).textContent = line.choices ? '' : (getDev() === 'touch' ? tx({ th: 'แตะเพื่อไปต่อ ▶', en: 'Tap to continue ▶' }) : getDev() === 'pad' ? tx({ th: 'A ▶', en: 'A ▶' }) : tx({ th: 'E / คลิก ▶', en: 'E / Click ▶' }));
   }
 }
 /** Pre-rendered top-down map (used by minimap and the territory map). */

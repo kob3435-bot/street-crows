@@ -1,4 +1,5 @@
 import './ui/style.css';
+import { setDev } from './ui/glyphs';
 import { World } from './sim/world';
 import { GameRenderer } from './render/renderer';
 import { Input } from './core/input';
@@ -46,6 +47,7 @@ const touch = new TouchControls(ui, input, world);
 const touchOn = coarse || qs.get('touch') === '1';
 touch.setActive(false);
 if (hud) (hud as any).touchMode = touchOn;
+setDev(touchOn ? 'touch' : 'kbm');
 const applySettings = () => { world.camZoom = Math.max(4.5, Math.min(18, Number(settings.zoom) || 11)); input.sensitivity = settings.sens; input.invertY = settings.invertY; audio.setVolume(settings.volume, settings.music); if (hud) (hud as any).showFps = settings.fps; };
 applySettings(); menu.onSettings = applySettings;
 let zoomSaveT: any = 0; bus.on('zoom', (e) => { settings.zoom = Math.round(e.d * 10) / 10; clearTimeout(zoomSaveT); zoomSaveT = setTimeout(() => saveSettings(settings), 500); });

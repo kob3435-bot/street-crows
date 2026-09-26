@@ -37,7 +37,7 @@
   {
     "name": "movement: WASD + Shift sprint moves player",
     "ok": true,
-    "info": "moved 12.0 m"
+    "info": "moved 12.8 m"
   },
   {
     "name": "combat input: LMB/RMB/F produce attacks",
@@ -82,7 +82,7 @@
   {
     "name": "render: frames rendering",
     "ok": true,
-    "info": "fps 13.1 (software GL), draw calls 291"
+    "info": "fps 13.1 (software GL), draw calls 294"
   },
   {
     "name": "boot: zero console/runtime errors (desktop)",
@@ -92,27 +92,27 @@
   {
     "name": "combat: player beats 3 grunts (no god mode, no items)",
     "ok": true,
-    "info": "22s sim, HP left 60/100"
+    "info": "22s sim, HP left 38/100"
   },
   {
     "name": "progression: EXP / money / rep gained from fights",
     "ok": true,
-    "info": "exp 69 lvl 1 ¥720 rep 18"
+    "info": "exp 69 lvl 1 ¥663 rep 18"
   },
   {
     "name": "AI: attack-token system (<=2 simultaneous attackers of 6)",
     "ok": true,
-    "info": "max 2; mode mix {\"circle\":4625,\"approach\":36,\"feint\":294,\"attack\":1425,\"recover\":820}"
+    "info": "max 1; mode mix {\"approach\":35,\"circle\":5527,\"attack\":983,\"recover\":529,\"feint\":126}"
   },
   {
     "name": "AI: uses spacing/circling (not just walk-up-and-spam)",
     "ok": true,
-    "info": "{\"circle\":4625,\"approach\":36,\"feint\":294,\"attack\":1425,\"recover\":820}"
+    "info": "{\"approach\":35,\"circle\":5527,\"attack\":983,\"recover\":529,\"feint\":126}"
   },
   {
     "name": "AI: tracks player habits (punch spam detected)",
     "ok": true,
-    "info": "punch habit 0.2 -> 12.4, punchSpam=true"
+    "info": "punch habit 0.3 -> 16.1, punchSpam=true"
   },
   {
     "name": "progression: level up grants stat + skill points",
@@ -197,7 +197,7 @@
   {
     "name": "bosses: 3-phase transitions happen (phase 2 & final)",
     "ok": true,
-    "info": "onoda:1,onoda:2,kuroki:1,kuroki:2,kirishima:1,kirishima:2,kirishima:1,kirishima:2,tsukiyo:1,tsukiyo:2,goda:1,goda:2,hayate:1,hayate:2"
+    "info": "onoda:1,onoda:2,kuroki:1,kuroki:2,kirishima:1,kirishima:2,tsukiyo:1,tsukiyo:1,tsukiyo:2,goda:1,goda:2,hayate:1,hayate:2"
   },
   {
     "name": "story: chapter 1-3 finished, gangs turned friendly",
@@ -222,7 +222,7 @@
   {
     "name": "load: level/EXP/skills/quests/relations/customization/position restored",
     "ok": true,
-    "info": "{\"level\":3,\"exp\":130,\"skills\":[\"iron_fist\",\"thick_skin\"],\"done\":[\"tutorial\"],\"active\":[\"main1\",\"side_cat\"],\"rel\":62,\"hair\":\"mohawk\",\"money\":1624,\"x\":-120,\"z\":40,\"clock\":19}"
+    "info": "{\"level\":3,\"exp\":130,\"skills\":[\"iron_fist\",\"thick_skin\"],\"done\":[\"tutorial\"],\"active\":[\"main1\",\"side_cat\"],\"rel\":62,\"hair\":\"mohawk\",\"money\":1615,\"x\":-120,\"z\":40,\"clock\":19}"
   },
   {
     "name": "autosave: written after key event (debounced)",
@@ -267,7 +267,7 @@
   {
     "name": "bounds: player cannot leave the map (4 edges, 8 s sprint each)",
     "ok": true,
-    "info": "[[197.55,197.6,3.1],[197.55,-197.6,0.7],[197.55,0.6,197.6],[197.55,54.8,-197.6]]"
+    "info": "[[197.55,197.6,-0.9],[197.55,-197.6,0.2],[197.55,0.2,197.6],[197.55,54.8,-197.6]]"
   },
   {
     "name": "bounds: never falls through the ground (y >= 0)",
@@ -287,7 +287,7 @@
   {
     "name": "combat: no hits through walls (both directions)",
     "ok": true,
-    "info": "{\"dist\":1.45,\"tries\":27,\"hits\":0,\"playerHpLost\":-78.7,\"enemyHpLost\":0,\"controlHitsWithoutWall\":9}"
+    "info": "{\"dist\":1.45,\"tries\":27,\"hits\":0,\"playerHpLost\":-12,\"enemyHpLost\":0,\"controlHitsWithoutWall\":9}"
   },
   {
     "name": "world rules: zero runtime errors",
@@ -312,7 +312,7 @@
   {
     "name": "mobile portrait: virtual joystick moves the player",
     "ok": true,
-    "info": "moved 20.3 m"
+    "info": "moved 18.7 m"
   },
   {
     "name": "mobile portrait: drag on right side rotates camera",
@@ -332,7 +332,7 @@
   {
     "name": "mobile portrait: zero console/runtime errors",
     "ok": true,
-    "info": " fps(swiftshader) 37.7"
+    "info": " fps(swiftshader) 39.0"
   },
   {
     "name": "mobile landscape: coarse pointer detected, low quality auto-selected",
@@ -352,7 +352,7 @@
   {
     "name": "mobile landscape: virtual joystick moves the player",
     "ok": true,
-    "info": "moved 19.3 m"
+    "info": "moved 18.8 m"
   },
   {
     "name": "mobile landscape: drag on right side rotates camera",
@@ -372,7 +372,7 @@
   {
     "name": "mobile landscape: zero console/runtime errors",
     "ok": true,
-    "info": " fps(swiftshader) 31.5"
+    "info": " fps(swiftshader) 27.2"
   },
   {
     "name": "visual: screenshots captured (day/combat/boss/golden/night/rooftop)",
@@ -387,7 +387,7 @@
   {
     "name": "gamepad: left stick moves, right stick turns camera",
     "ok": true,
-    "info": "moved 3.8 m, dyaw -0.40"
+    "info": "moved 3.5 m, dyaw -0.36"
   },
   {
     "name": "gamepad: X/Y/B trigger punch/heavy/kick",
@@ -437,12 +437,12 @@
   {
     "name": "camera: wall collision pulls in smoothly (no jitter while standing still)",
     "ok": true,
-    "info": "dist 2.37, spread 0.000"
+    "info": "dist 3.05, spread 0.000"
   },
   {
     "name": "camera: buildings between camera and player are cut away",
     "ok": true,
-    "info": "143/240 samples had cut buildings; max 5"
+    "info": "147/240 samples had cut buildings; max 5"
   },
   {
     "name": "camera: auto-framing widens with several engaged enemies",
@@ -457,7 +457,7 @@
   {
     "name": "camera: gamepad D-pad down/up zooms out/in",
     "ok": true,
-    "info": "11 -> 12.3 -> 10.1"
+    "info": "11 -> 12.3 -> 9.9"
   },
   {
     "name": "gamepad: L3 toggles AUTO",
@@ -482,37 +482,37 @@
   {
     "name": "AUTO: never attacks on its own (0 swings, enemy HP unchanged, no attack/block/dodge state)",
     "ok": true,
-    "info": "swings 0, HP 96->96, states "
+    "info": "swings 0, HP 80->80, states "
   },
   {
     "name": "AUTO: under attack by 3 enemies, still never attacks/blocks/dodges (HP of all enemies unchanged)",
     "ok": true,
-    "info": "{\"hp0\":[66,66,80],\"hp1\":[66,66,80],\"swings\":0,\"hits\":0,\"bad\":[],\"st\":\"seek\",\"near\":2.2302981951320433}"
+    "info": "{\"hp0\":[74,96,73],\"hp1\":[74,96,73],\"swings\":0,\"hits\":0,\"bad\":[],\"st\":\"engage\",\"near\":1.9547332899763834}"
   },
   {
     "name": "AUTO: targets nearest, re-targets when the target is defeated",
     "ok": true,
-    "info": "{\"first\":true,\"second\":true,\"d2\":1.7365517008268,\"st\":\"engage\"}"
+    "info": "{\"first\":true,\"second\":true,\"d2\":1.7963026846959091,\"st\":\"engage\"}"
   },
   {
     "name": "AUTO: player movement input takes over (moves away while held)",
     "ok": true,
-    "info": "{\"d0\":14.415345055219198,\"dMan\":19.51539091207282,\"stMan\":\"manual\",\"stHold\":\"manual\",\"dAfter\":1.7510889603317092,\"st\":\"engage\"}"
+    "info": "{\"d0\":10.100713469299974,\"dMan\":15.200759326153594,\"stMan\":\"manual\",\"stHold\":\"manual\",\"dAfter\":1.797871956491197,\"st\":\"engage\"}"
   },
   {
     "name": "AUTO: resumes ~0.5 s after input stops",
     "ok": true,
-    "info": "dist 19.5 -> 1.8"
+    "info": "dist 15.2 -> 1.8"
   },
   {
     "name": "AUTO: pauses during dialogue, resumes after",
     "ok": true,
-    "info": "{\"moved\":0,\"st\":\"paused\",\"moved2\":12.219918341173601,\"d0\":13.999999999999995,\"st2\":\"engage\",\"dlg\":false,\"skips\":1,\"ps\":\"idle\"}"
+    "info": "{\"moved\":0,\"st\":\"paused\",\"moved2\":10.191848526110947,\"d0\":12.000000000000014,\"st2\":\"engage\",\"dlg\":false,\"skips\":1,\"ps\":\"idle\"}"
   },
   {
     "name": "AUTO: never targets civilians / friendly gang members; shows \"no enemies\" toast",
     "ok": true,
-    "info": "{\"friendlyHostile\":false,\"target\":null,\"moved\":0.030749335313458085,\"toasts\":1,\"st\":\"none\"}"
+    "info": "{\"friendlyHostile\":false,\"target\":null,\"moved\":0.0011725744463839,\"toasts\":1,\"st\":\"none\"}"
   },
   {
     "name": "AUTO: T key toggles on/off",
@@ -537,7 +537,7 @@
   {
     "name": "mobile portrait: AUTO walks toward the enemy group",
     "ok": true,
-    "info": "moved 8.3 m toward the group (they also close in), nearest enemy 1.4 m; cam dist 16.4 (zoom 11, portrait x1.22)"
+    "info": "moved 13.6 m toward the group (they also close in), nearest enemy 2.9 m; cam dist 16.4 (zoom 11, portrait x1.22)"
   },
   {
     "name": "mobile portrait: zero console errors",
@@ -557,7 +557,7 @@
   {
     "name": "mobile landscape: AUTO walks toward the enemy group",
     "ok": true,
-    "info": "moved 13.1 m toward the group (they also close in), nearest enemy 1.1 m; cam dist 13.4 (zoom 11, portrait x1.22)"
+    "info": "moved 10.8 m toward the group (they also close in), nearest enemy 1.7 m; cam dist 13.4 (zoom 11, portrait x1.22)"
   },
   {
     "name": "mobile landscape: zero console errors",
@@ -567,117 +567,117 @@
   {
     "name": "story: quest completable by bot: tutorial",
     "ok": true,
-    "info": "Lv2, downs 0, iters 13"
+    "info": "Lv2, downs 0, iters 9"
   },
   {
     "name": "story: quest completable by bot: main1",
     "ok": true,
-    "info": "Lv4, downs 1, iters 63"
+    "info": "Lv4, downs 1, iters 58"
   },
   {
     "name": "story: quest completable by bot: side_cat",
     "ok": true,
-    "info": "Lv4, downs 0, iters 9"
+    "info": "Lv4, downs 0, iters 8"
   },
   {
     "name": "story: quest completable by bot: side_ramen",
     "ok": true,
-    "info": "Lv5, downs 0, iters 22"
+    "info": "Lv5, downs 0, iters 19"
   },
   {
     "name": "story: quest completable by bot: side_mikami",
     "ok": true,
-    "info": "Lv5, downs 0, iters 15"
+    "info": "Lv5, downs 0, iters 17"
   },
   {
     "name": "story: quest completable by bot: side_yamikaze",
     "ok": true,
-    "info": "Lv6, downs 0, iters 34"
+    "info": "Lv6, downs 0, iters 28"
   },
   {
     "name": "story: quest completable by bot: side_ryo",
     "ok": true,
-    "info": "Lv6, downs 0, iters 29"
+    "info": "Lv6, downs 0, iters 23"
   },
   {
     "name": "story: quest completable by bot: main2",
     "ok": true,
-    "info": "Lv7, downs 1, iters 65"
+    "info": "Lv7, downs 1, iters 61"
   },
   {
     "name": "story: quest completable by bot: side_rumor",
     "ok": true,
-    "info": "Lv8, downs 0, iters 40"
+    "info": "Lv8, downs 0, iters 52"
   },
   {
     "name": "story: quest completable by bot: main3",
     "ok": true,
-    "info": "Lv9, downs 0, iters 92"
+    "info": "Lv9, downs 0, iters 106"
   },
   {
     "name": "story: quest completable by bot: side_kai",
     "ok": true,
-    "info": "Lv10, downs 0, iters 12"
+    "info": "Lv10, downs 0, iters 14"
   },
   {
     "name": "story: quest completable by bot: main4",
     "ok": true,
-    "info": "Lv11, downs 2, iters 176"
+    "info": "Lv11, downs 2, iters 161"
   },
   {
     "name": "story: quest completable by bot: side_taisho",
     "ok": true,
-    "info": "Lv12, downs 0, iters 34"
+    "info": "Lv12, downs 0, iters 40"
   },
   {
     "name": "story: quest completable by bot: side_daigo",
     "ok": true,
-    "info": "Lv12, downs 0, iters 19"
+    "info": "Lv12, downs 0, iters 22"
   },
   {
     "name": "story: quest completable by bot: rematch_onoda",
     "ok": true,
-    "info": "Lv13, downs 0, iters 24"
+    "info": "Lv13, downs 0, iters 19"
   },
   {
     "name": "story: quest completable by bot: main5",
     "ok": true,
-    "info": "Lv14, downs 1, iters 114"
+    "info": "Lv14, downs 1, iters 126"
   },
   {
     "name": "story: quest completable by bot: side_scoop",
     "ok": true,
-    "info": "Lv14, downs 0, iters 41"
+    "info": "Lv14, downs 0, iters 36"
   },
   {
     "name": "story: quest completable by bot: side_tools",
     "ok": true,
-    "info": "Lv15, downs 0, iters 99"
+    "info": "Lv15, downs 0, iters 42"
   },
   {
     "name": "story: quest completable by bot: main6",
     "ok": true,
-    "info": "Lv16, downs 0, iters 109"
+    "info": "Lv16, downs 0, iters 127"
   },
   {
     "name": "story: quest completable by bot: side_granny2",
     "ok": true,
-    "info": "Lv16, downs 0, iters 15"
+    "info": "Lv16, downs 0, iters 12"
   },
   {
     "name": "story: quest completable by bot: side_todoroki",
     "ok": true,
-    "info": "Lv17, downs 0, iters 38"
+    "info": "Lv17, downs 0, iters 39"
   },
   {
     "name": "story: quest completable by bot: main7",
     "ok": true,
-    "info": "Lv18, downs 1, iters 150"
+    "info": "Lv18, downs 0, iters 111"
   },
   {
     "name": "story: quest completable by bot: rematch_kirishima",
     "ok": true,
-    "info": "Lv18, downs 0, iters 31"
+    "info": "Lv18, downs 0, iters 42"
   },
   {
     "name": "story: quest completable by bot: rematch_goda",
@@ -687,27 +687,27 @@
   {
     "name": "story: quest completable by bot: main8",
     "ok": true,
-    "info": "Lv20, downs 1, iters 153"
+    "info": "Lv20, downs 1, iters 140"
   },
   {
     "name": "story: quest completable by bot: main9",
     "ok": true,
-    "info": "Lv22, downs 0, iters 168"
+    "info": "Lv22, downs 0, iters 161"
   },
   {
     "name": "story: quest completable by bot: main10",
     "ok": true,
-    "info": "Lv23, downs 0, iters 161"
+    "info": "Lv23, downs 0, iters 115"
   },
   {
     "name": "story: quest completable by bot: tournament",
     "ok": true,
-    "info": "Lv25, downs 0, iters 120"
+    "info": "Lv25, downs 0, iters 116"
   },
   {
     "name": "story: quest completable by bot: secret_sakaki",
     "ok": true,
-    "info": "Lv27, downs 0, iters 108"
+    "info": "Lv27, downs 0, iters 90"
   },
   {
     "name": "bosses: all 10 bosses + 10 mini-bosses spawn (bossStart)",
@@ -741,6 +741,121 @@
   },
   {
     "name": "story run: zero runtime errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "occluders: street lamp between camera and player fades (screen-door), restores when clear",
+    "ok": true,
+    "info": "{\"lamp\":[-190,-9.2],\"faded\":0.22,\"back\":1,\"props\":0}"
+  },
+  {
+    "name": "occluders: buildings between camera and fight become see-through (dither fade, full height)",
+    "ok": true,
+    "info": "{\"x\":0,\"z\":-50,\"k\":1,\"faded\":1,\"minFade\":0,\"attr\":0}"
+  },
+  {
+    "name": "desktop: fight hint uses keyboard/mouse chips, compact in the top band (no HUD overlap)",
+    "ok": true,
+    "info": "top 8/720, cx 726/1280, 9 chips, overlaps "
+  },
+  {
+    "name": "labels: 9-enemy group keeps HP bars, names decluttered (no overlapping names, target highlighted)",
+    "ok": true,
+    "info": "bars 9, names 3, overlaps 0, target tags 1"
+  },
+  {
+    "name": "desktop: group-fight screenshot has faded occluders in view",
+    "ok": true,
+    "info": "{\"cut\":1,\"props\":4}"
+  },
+  {
+    "name": "hint: click/tap closes it",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "gamepad: key bar + hints switch to gamepad buttons",
+    "ok": true,
+    "info": "kb bar \"Tabเมนู Mแผนที่ Hวิธีควบคุม Eคุย/ใช้ TAU…\" -> pad; hint  ปัดป้อง ✕   กด  LB  ตอนหมัดกำลังมา = ปัด แล้วโจมตีทันทีเพื่อสวนกลับ "
+  },
+  {
+    "name": "keyboard: glyphs switch back on key press",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "desktop polish: zero console errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "touch portrait: combat hint names the on-screen buttons (no keyboard/mouse keys)",
+    "ok": true,
+    "info": "เริ่มต่อสู้!✕ต่อยหนักเตะเตะหนัก โจมตี · หลบการ์ด (ค้าง) ป้องกันจับ ทุ่ม · พิเศษ เกจเต็ม · "
+  },
+  {
+    "name": "touch portrait: hint is compact, in the upper area and covers no HUD panel or button",
+    "ok": true,
+    "info": "top 149 bottom 224 of 839; overlaps "
+  },
+  {
+    "name": "touch portrait: key bar hidden, dialogue/objective texts are touch wording",
+    "ok": true,
+    "info": "objective \"วันแรกที่อาเคโบโนะ▶ มาถึงสถานี\", next \"แตะเพื่อไปต่อ ▶\""
+  },
+  {
+    "name": "touch portrait: hint auto-dismisses after a few seconds",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "touch portrait: special hint references the พิเศษ button, tap closes it",
+    "ok": true,
+    "info": "{\"spOk\":true,\"closed\":true}"
+  },
+  {
+    "name": "touch portrait: interact prompt shows the 💬 button, not \"E\"",
+    "ok": true,
+    "info": "<kbd class=\"k-touch\">💬</kbd>คุยกับเคนตะ"
+  },
+  {
+    "name": "touch portrait: zero console errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "touch landscape: combat hint names the on-screen buttons (no keyboard/mouse keys)",
+    "ok": true,
+    "info": "เริ่มต่อสู้!✕ต่อยหนักเตะเตะหนัก โจมตี · หลบการ์ด (ค้าง) ป้องกันจับ ทุ่ม · พิเศษ เกจเต็ม · "
+  },
+  {
+    "name": "touch landscape: hint is compact, in the upper area and covers no HUD panel or button",
+    "ok": true,
+    "info": "top 64 bottom 139 of 412; overlaps "
+  },
+  {
+    "name": "touch landscape: key bar hidden, dialogue/objective texts are touch wording",
+    "ok": true,
+    "info": "objective \"วันแรกที่อาเคโบโนะ▶ มาถึงสถานี\", next \"แตะเพื่อไปต่อ ▶\""
+  },
+  {
+    "name": "touch landscape: hint auto-dismisses after a few seconds",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "touch landscape: special hint references the พิเศษ button, tap closes it",
+    "ok": true,
+    "info": "{\"spOk\":true,\"closed\":true}"
+  },
+  {
+    "name": "touch landscape: interact prompt shows the 💬 button, not \"E\"",
+    "ok": true,
+    "info": "<kbd class=\"k-touch\">💬</kbd>คุยกับเคนตะ"
+  },
+  {
+    "name": "touch landscape: zero console errors",
     "ok": true,
     "info": ""
   }

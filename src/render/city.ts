@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { CityData, Prop, Building } from '../sim/cityGen';
-import { toon, buildingMaterial, outlineMat, canvasTexture, shared } from './toon';
+import { toon, buildingMaterial, outlineMat, canvasTexture, shared, fadeable, fadeGeometry } from './toon';
 import { MAP_HALF, ROOF, RIVER } from '../data/city';
 import { mulberry32 } from '../core/rng';
 
@@ -24,14 +24,16 @@ export const lampHeadMat = new THREE.MeshBasicMaterial({ color: 0xfff2c8 });
 export const lanternMat = new THREE.MeshBasicMaterial({ color: 0xff4a3a });
 export const vendingMat = new THREE.MeshBasicMaterial({ color: 0xe8f4ff });
 const signMats: THREE.MeshBasicMaterial[] = [];
-/** Per-building render handles for the camera cutaway (buildings between camera and fight sink to a low stub). */
-interface BInfo { b: Building; im: THREE.InstancedMesh; om: THREE.InstancedMesh; i: number; cur: number; att: THREE.InstancedMesh | null; a0: number; a1: number; signs: THREE.Object3D[]; roofTop: boolean; camIn?: boolean }
-const CUT_H = 1.3;
+/** Per-building render handles for the camera occluder fade (buildings between camera and fight become see-through). */
+interface BInfo { b: Building; fa: THREE.InstancedBufferAttribute; i: number; cur: number; afa: THREE.InstancedBufferAttribute | null; a0: number; a1: number; signs: THREE.Object3D[]; roofTop: boolean; camIn?: boolean }
+/** Per-prop-instance handle (lamps, poles, trees, arches, containers...) for the same fade. */
+interface PInfo { fa: THREE.InstancedBufferAttribute; i: number; cur: number; x0: number; y0: number; z0: number; x1: number; y1: number; z1: number; g: THREE.Group }
+const FADE_B = 0.14, FADE_P = 0.22;
 
 export class CityView {
   group = new THREE.Group(); chunks: { g: THREE.Group; built: boolean; cx: number; cz: number; items: Inst[]; buildings: Building[]; signs: Building[] }[] = [];
   lampPools!: THREE.InstancedMesh; water!: THREE.Mesh; waterTex!: THREE.Texture; skyMat!: THREE.ShaderMaterial; stars!: THREE.Points; sky!: THREE.Mesh;
-  glowSprites: THREE.Sprite[] = []; bMat = buildingMaterial(); binfos: BInfo[] = []; cutCount = 0; private attMats = new Map<THREE.InstancedMesh, THREE.Matrix4[]>();
+  glowSprites: THREE.Sprite[] = []; bMat = buildingMaterial(); binfos: BInfo[] = []; pinfos: PInfo[] = []; cutCount = 0; propFadeCount = 0;
   constructor(private city: CityData, private quality: number) {
     for (let i = 0; i < NCH * NCH; i++) this.chunks.push({ g: new THREE.Group(), built: false, cx: (i % NCH) * CH - MAP_HALF - 2 + CH / 2, cz: Math.floor(i / NCH) * CH - MAP_HALF - 2 + CH / 2, items: [], buildings: [], signs: [] });
     for (const c of this.chunks) { c.g.visible = false; this.group.add(c.g); }
@@ -77,7 +79,8 @@ export class CityView {
     c.built = true;
     // buildings
     if (c.buildings.length) {
-      const bs = c.buildings; const n = bs.length; const im = new THREE.InstancedMesh(unitBox, this.bMat, n); const om = new THREE.InstancedMesh(unitBox, outlineMat, n);
+      const bs = c.buildings; const n = bs.length; const { g: bg, a: fa } = fadeGeometry(unitBox, n);
+      const im = new THREE.InstancedMesh(bg, fadeable(this.bMat), n); const om = new THREE.InstancedMesh(bg, fadeable(outlineMat), n);
       const m = new THREE.Matrix4(), q = new THREE.Quaternion(), col = new THREE.Color(); const t = 0.09;
       const roofs: Inst[] = []; const infos: BInfo[] = [];
       bs.forEach((b, i) => {
@@ -92,16 +95,16 @@ export class CityView {
           const side = b.signSide || 's'; const aw = side === 'e' || side === 'w' ? [0.9, 0.12, d * 0.9] : [w * 0.9, 0.12, 0.9]; const ax = side === 'e' ? b.x1 + 0.45 : side === 'w' ? b.x0 - 0.45 : cx; const az = side === 's' ? b.z1 + 0.45 : side === 'n' ? b.z0 - 0.45 : cz;
           roofs.push(this.I('box', ['#c83a3a', '#3a6ac8', '#e0a030', '#3a9a5a'][i % 4], ax, 3.1, az, aw[0], 0.38, aw[2], 0, false)); roofs.push(this.I('box', '#f4f0e6', ax, 2.86, az, aw[0] * 1.01, 0.1, aw[2] * 1.01, 0, false));
         }
-        infos.push({ b, im, om, i, cur: 1, att: null, a0, a1: roofs.length, signs: [], roofTop: isRoofTop });
+        infos.push({ b, fa, i, cur: 1, afa: null, a0, a1: roofs.length, signs: [], roofTop: isRoofTop });
       });
       im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; im.computeBoundingSphere(); om.computeBoundingSphere();
       c.g.add(im, om);
       // building attachments (roof caps, awnings) live in their own instanced mesh so they can hide with the cutaway
       if (roofs.length) {
-        const att = new THREE.InstancedMesh(unitBox, matFor('toon'), roofs.length); const mats: THREE.Matrix4[] = [];
-        roofs.forEach((it, k) => { const mm = new THREE.Matrix4().compose(it.p, q.identity(), it.s); att.setMatrixAt(k, mm); att.setColorAt(k, col.set(it.color)); mats.push(mm); });
-        att.castShadow = this.quality > 1; att.receiveShadow = true; att.computeBoundingSphere(); c.g.add(att); this.attMats.set(att, mats);
-        for (const inf of infos) inf.att = att;
+        const { g: ag, a: afa } = fadeGeometry(unitBox, roofs.length); const att = new THREE.InstancedMesh(ag, fadeable(matFor('toon')), roofs.length);
+        roofs.forEach((it, k) => { const mm = new THREE.Matrix4().compose(it.p, q.identity(), it.s); att.setMatrixAt(k, mm); att.setColorAt(k, col.set(it.color)); });
+        att.castShadow = this.quality > 1; att.receiveShadow = true; att.computeBoundingSphere(); c.g.add(att);
+        for (const inf of infos) inf.afa = afa;
       }
       for (const b of c.signs) { const objs = this.makeSign(c.g, b); const inf = infos.find(x => x.b === b); if (inf) inf.signs.push(...objs); }
       this.binfos.push(...infos);
@@ -111,9 +114,15 @@ export class CityView {
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), col = new THREE.Color(), up = new THREE.Vector3(0, 1, 0);
     for (const [k, list] of groups) {
       const [geoK, matK, ol] = k.split('|'); const geo = GEOS[geoK]; const mat = matFor(matK);
-      const im = new THREE.InstancedMesh(geo, mat, list.length); const om = ol === '1' && this.quality > 0 ? new THREE.InstancedMesh(geo, outlineMat, list.length) : null;
+      const { g: pg, a: pfa } = fadeGeometry(geo, list.length);
+      const im = new THREE.InstancedMesh(pg, fadeable(mat), list.length); const om = ol === '1' && this.quality > 0 ? new THREE.InstancedMesh(pg, fadeable(outlineMat), list.length) : null;
       geo.computeBoundingBox(); const bb = geo.boundingBox!; const size = new THREE.Vector3(); bb.getSize(size); const t = 0.05;
       list.forEach((it, i) => {
+        { // occluder bounds (rotation-safe radius); low props never block the view
+          const centred = geoK === 'foliage' || geoK === 'sphere'; const hy = geoK === 'foliage' ? it.s.y : it.s.y / 2; const y0 = centred ? it.p.y - hy : it.p.y, y1 = centred ? it.p.y + hy : it.p.y + it.s.y;
+          const rad = (geoK === 'foliage' ? Math.max(it.s.x, it.s.z) : Math.max(it.s.x, it.s.z) * 0.5 * (geoK === 'box' && it.r ? 1.42 : 1)) + 0.1; const rx = geoK === 'box' && !it.r ? it.s.x / 2 + 0.1 : rad, rz = geoK === 'box' && !it.r ? it.s.z / 2 + 0.1 : rad;
+          if (y1 > 1.0) this.pinfos.push({ fa: pfa, i, cur: 1, x0: it.p.x - rx, x1: it.p.x + rx, y0, y1, z0: it.p.z - rz, z1: it.p.z + rz, g: c.g });
+        }
         q.setFromAxisAngle(up, it.r); m.compose(it.p, q, it.s); im.setMatrixAt(i, m); if (matK === 'toon') im.setColorAt(i, col.set(it.color));
         if (om) { const s2 = new THREE.Vector3(it.s.x + 2 * t / size.x, it.s.y + 2 * t / size.y, it.s.z + 2 * t / size.z); const p2 = it.p.clone(); if (geoK === 'box' || geoK === 'cyl' || geoK === 'cone') p2.y -= t; m.compose(p2, q, s2); om.setMatrixAt(i, m); }
       });
@@ -129,7 +138,7 @@ export class CityView {
       if (vertical) { const chars = [...txt].slice(0, 5); const fs = Math.min(70, (H - 30) / chars.length); c.font = `900 ${fs}px "Noto Sans CJK JP", "Kanit", sans-serif`; chars.forEach((ch, i) => c.fillText(ch, W / 2, 20 + fs * 0.55 + i * fs)); }
       else { c.font = `900 ${Math.min(80, 900 / txt.length)}px "Noto Sans CJK JP", "Kanit", sans-serif`; c.fillText(txt, W / 2, H / 2 + 4); }
     });
-    const mat = new THREE.MeshBasicMaterial({ map: tex, color: 0xdddddd }); signMats.push(mat);
+    const mat = new THREE.MeshBasicMaterial({ map: tex, color: 0xdddddd, transparent: true }); signMats.push(mat);
     const w = vertical ? 1.0 : Math.min(10, (b.x1 - b.x0) * 0.8), h = vertical ? 4 : 1.8;
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
     const side = b.signSide || 's'; const cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2; const y = vertical ? Math.min(b.h - 2.2, 5.2) : Math.min(b.h - 1.2, 4.6);
@@ -144,32 +153,46 @@ export class CityView {
     return made;
   }
   /**
-   * Camera cutaway: any building whose volume intersects a sight line camera->(player / engaged enemies),
-   * or that contains the camera, smoothly sinks to a low stub; its roof caps, awnings and signs hide.
-   * The rooftop-playable school building is never cut (the camera collides with it instead).
+   * Camera occluder fade: buildings whose volume intersects a sight line camera->(player / engaged enemies), or that
+   * contain / hug the camera, fade to a screen-door see-through; their roof caps and awnings fade with them and signs
+   * turn translucent. Street lamps, poles, trees, arches, containers etc. on those sight lines or right in front of the
+   * lens fade the same way, so nothing opaque covers the fight. The rooftop-playable school building never fades.
    */
   updateCutaway(cam: THREE.Vector3, pts: THREE.Vector3[], dt: number) {
+    // stop each sight line ~0.9 m short of its target so a wall the fighter is leaning on (behind them) doesn't fade
+    pts = pts.map(p => { const v = p.clone().sub(cam); const L = v.length(); return L > 1.2 ? cam.clone().addScaledVector(v, (L - 0.9) / L) : p; });
     let minX = cam.x, maxX = cam.x, minZ = cam.z, maxZ = cam.z; for (const p of pts) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z); }
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), t = 0.09, zero = new THREE.Matrix4().makeScale(0, 0, 0); let n = 0; const dirty = new Set<THREE.InstancedMesh>();
+    const dirty = new Set<THREE.InstancedBufferAttribute>(); let n = 0;
+    const step = (cur: number, want: number, snap: boolean) => Math.abs(cur - want) < 0.02 || (snap && want < cur) ? want : cur + (want - cur) * (1 - Math.exp(-(want < cur ? 12 : 5) * dt));
     for (const inf of this.binfos) {
       const b = inf.b; let want = 1; inf.camIn = false;
-      if (!inf.roofTop && b.x1 > minX - 1 && b.x0 < maxX + 1 && b.z1 > minZ - 1 && b.z0 < maxZ + 1) {
-        const inside = cam.x > b.x0 - 0.6 && cam.x < b.x1 + 0.6 && cam.z > b.z0 - 0.6 && cam.z < b.z1 + 0.6 && cam.y < b.h + 1.5;
+      if (!inf.roofTop && b.x1 > minX - 1.5 && b.x0 < maxX + 1.5 && b.z1 > minZ - 1.5 && b.z0 < maxZ + 1.5) {
+        const inside = cam.x > b.x0 - 1.2 && cam.x < b.x1 + 1.2 && cam.z > b.z0 - 1.2 && cam.z < b.z1 + 1.2 && cam.y < b.h + 1.5;
         inf.camIn = inside;
-        if (inside || pts.some(p => segBox(cam, p, b.x0 - 0.35, 0, b.z0 - 0.35, b.x1 + 0.35, b.h + 0.4, b.z1 + 0.35))) want = Math.min(1, CUT_H / b.h);
+        if (inside) want = 0; // hugging the lens: hide completely (no full-screen screen-door)
+        else { const dx = Math.max(b.x0 - cam.x, 0, cam.x - b.x1), dy = Math.max(0, cam.y - b.h - 0.5), dz = Math.max(b.z0 - cam.z, 0, cam.z - b.z1);
+          if (dx * dx + dy * dy + dz * dz < 9 || pts.some(p => segBox(cam, p, b.x0 - 0.35, 0, b.z0 - 0.35, b.x1 + 0.35, b.h + 0.4, b.z1 + 0.35))) want = FADE_B; } // on a sight line, or right under/next to the lens
       }
       if (want === 1 && inf.cur === 1) continue;
-      const nc = Math.abs(inf.cur - want) < 0.01 || (inf.camIn && want < inf.cur) ? want : inf.cur + (want - inf.cur) * (1 - Math.exp(-(want < inf.cur ? 14 : 5) * dt));
-      const wasFull = inf.cur > 0.97; inf.cur = nc; if (nc < 1) n++;
-      const w = b.x1 - b.x0, d = b.z1 - b.z0, cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2, h = b.h * nc;
-      m.compose(new THREE.Vector3(cx, 0, cz), q, new THREE.Vector3(w, h, d)); inf.im.setMatrixAt(inf.i, m); dirty.add(inf.im);
-      m.compose(new THREE.Vector3(cx, -t, cz), q, new THREE.Vector3(w + t * 2, h + t * 2, d + t * 2)); inf.om.setMatrixAt(inf.i, m); dirty.add(inf.om);
-      const full = nc > 0.97;
-      if (full !== wasFull && inf.att) { const mats = this.attMats.get(inf.att)!; for (let k = inf.a0; k < inf.a1; k++) inf.att.setMatrixAt(k, full ? mats[k] : zero); dirty.add(inf.att); }
-      for (const o of inf.signs) o.visible = full;
+      const wasFull = inf.cur > 0.97; inf.cur = step(inf.cur, want, !!inf.camIn); if (inf.cur < 1) n++;
+      inf.fa.setX(inf.i, inf.cur); dirty.add(inf.fa);
+      if (inf.afa) { for (let k = inf.a0; k < inf.a1; k++) inf.afa.setX(k, inf.cur); dirty.add(inf.afa); }
+      const full = inf.cur > 0.97;
+      for (const o of inf.signs) { if ((o as THREE.Sprite).isSprite) o.visible = full; else { const m = (o as THREE.Mesh).material as THREE.MeshBasicMaterial; m.opacity = Math.max(0.15, inf.cur); m.depthWrite = full; } }
+      if (full !== wasFull && full) for (const o of inf.signs) o.visible = true;
     }
-    for (const im of dirty) { im.instanceMatrix.needsUpdate = true; }
-    this.cutCount = n;
+    let pn = 0;
+    for (const pi of this.pinfos) {
+      let want = 1;
+      if (pi.g.visible && pi.x1 > minX - 3 && pi.x0 < maxX + 3 && pi.z1 > minZ - 3 && pi.z0 < maxZ + 3) {
+        const dx = Math.max(pi.x0 - cam.x, 0, cam.x - pi.x1), dy = Math.max(pi.y0 - cam.y, 0, cam.y - pi.y1), dz = Math.max(pi.z0 - cam.z, 0, cam.z - pi.z1);
+        if (dx * dx + dy * dy + dz * dz < 2.6 * 2.6 || pts.some(p => segBox(cam, p, pi.x0 - 0.25, pi.y0, pi.z0 - 0.25, pi.x1 + 0.25, pi.y1 + 0.2, pi.z1 + 0.25))) want = FADE_P;
+      }
+      if (want === 1 && pi.cur === 1) continue;
+      pi.cur = step(pi.cur, want, false); if (pi.cur < 1) pn++; pi.fa.setX(pi.i, pi.cur); dirty.add(pi.fa);
+    }
+    for (const a of dirty) a.needsUpdate = true;
+    this.cutCount = n; this.propFadeCount = pn;
   }
   private buildGround() {
     const kinds: Record<string, string> = { road: '#3b3d44', tile: '#b7a68a', grass: '#6aa84f', dirt: '#b99c6c', concrete: '#8f8e88', parking: '#46484e', deck: '#8b8781', roof: '#8e948f', rail: '#5a4c3e' };

@@ -1,3 +1,4 @@
+import { getDev, setDev, type Dev } from '../ui/glyphs';
 /**
  * Unified input: keyboard+mouse, Gamepad API, touch (virtual controls call the
  * setVirtual* methods), and an injectable "bot" source used by automated tests.
@@ -14,7 +15,9 @@ export class Input {
   private vMove = { x: 0, y: 0, active: false }; private vSprint = false; private vBlock = false;
   bot: { moveX: number; moveY: number; sprint: boolean; block: boolean } | null = null;
   sensitivity = 1; invertY = false; enabled = true; pointerLocked = false;
-  lastDevice: 'kbm' | 'pad' | 'touch' = 'kbm';
+  get lastDevice(): Dev { return getDev(); }
+  set lastDevice(d: Dev) { if (d === 'kbm' && performance.now() - this.lastTouchT < 1200) return; setDev(d); } // ignore emulated mouse after touch
+  private lastTouchT = -1e9;
   private padPrev: boolean[] = [];
   private canvas: HTMLElement;
   private dragging = false; private lastMX = 0; private lastMY = 0;
@@ -30,6 +33,7 @@ export class Input {
       this.keys.add(e.code);
     });
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
+    window.addEventListener('touchstart', () => { this.lastTouchT = performance.now(); setDev('touch'); }, { capture: true, passive: true });
     window.addEventListener('blur', () => this.keys.clear());
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     canvas.addEventListener('mousedown', (e) => {

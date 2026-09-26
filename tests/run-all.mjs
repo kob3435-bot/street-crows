@@ -1,4 +1,4 @@
-const files = process.argv.slice(2).length ? process.argv.slice(2) : ['t1_boot_desktop', 't2_core_loop', 't3_save', 't4_world_rules', 't5_mobile', 't6_visual', 't7_gamepad', 't8_camera', 't9_auto', 't10_story'];
+const files = process.argv.slice(2).length ? process.argv.slice(2) : ['t1_boot_desktop', 't2_core_loop', 't3_save', 't4_world_rules', 't5_mobile', 't6_visual', 't7_gamepad', 't8_camera', 't9_auto', 't10_story', 't11_polish'];
 const R = [];
 for (const f of files) {
   console.log(`\n=== ${f} ===`);

@@ -1,4 +1,5 @@
 import type { World } from '../sim/world';
+import { keysIn, getDev } from './glyphs';
 import { ITEMS } from '../sim/world';
 import { tx, t, getLang, setLang } from '../core/i18n';
 import { bus } from '../core/events';
@@ -59,7 +60,7 @@ export class Menu {
   }
   private r_quests() {
     const q = this.w.quests; const T = (th: string, en: string) => tx({ th, en });
-    const act = q.active.map(a => { const d = QUEST_BY_ID[a.id]; const steps = d.steps.map((s, i) => `<p style="${i < a.step ? 'text-decoration:line-through;opacity:.5' : i === a.step ? 'font-weight:700' : 'opacity:.45'}">${i < a.step ? '✓' : i === a.step ? '▶' : '·'} ${esc(tx(s.obj))}</p>`).join('');
+    const act = q.active.map(a => { const d = QUEST_BY_ID[a.id]; const steps = d.steps.map((s, i) => `<p style="${i < a.step ? 'text-decoration:line-through;opacity:.5' : i === a.step ? 'font-weight:700' : 'opacity:.45'}">${i < a.step ? '✓' : i === a.step ? '▶' : '·'} ${esc(keysIn(tx(s.obj)))}</p>`).join('');
       return `<div class="card active ${q.tracked === a.id ? 'track' : ''}"><span class="tagline">${d.type.toUpperCase()}</span><h4>${esc(tx(d.title))}</h4><p><i>${esc(tx(d.desc))}</i></p>${steps}<button class="btn" data-track="${a.id}">${q.tracked === a.id ? '★ ' + T('กำลังติดตาม', 'Tracking') : T('ติดตาม', 'Track')}</button></div>`; }).join('') || `<p>${T('ไม่มีภารกิจ', 'No active quests')}</p>`;
     const giverName = (g?: string) => { if (!g) return ''; const it = this.w.interactables().find(i => i.id === g); return it ? tx(it.label) : g; };
     const avail = q.available().map(d => `<div class="card"><span class="tagline">${d.type.toUpperCase()}</span><h4>${esc(tx(d.title))}</h4><p>${esc(tx(d.desc))}</p><p>📍 ${esc(giverName(d.giver))}</p></div>`).join('') || `<p style="opacity:.6">-</p>`;
@@ -218,5 +219,8 @@ export function controlsHTML() {
     ['Gamepad', 'LS move · RS camera · X punch · Y heavy · B kick · RT heavy kick · A dodge · LB block · RB grab · LT sprint · R3 special · L3 AUTO · D-pad↑↓ zoom · D-pad→ interact · Back menu'],
     [T('มือถือ', 'Mobile'), T('จอยซ้าย · ปุ่มขวา · ลากจอขวาเพื่อหมุนกล้อง · จีบนิ้วสองนิ้วเพื่อซูม · ดันจอยสุด = วิ่ง · ปุ่ม AUTO', 'Left stick · right buttons · drag right side to look · pinch to zoom · push stick fully = sprint · AUTO button')],
   ];
+  const d = getDev();
+  if (d === 'touch') rows.unshift([T('ปุ่มบนจอ', 'On-screen buttons'), T('ต่อย · หนัก · เตะ · เตะหนัก · หลบ · การ์ด (กดค้าง) · จับ (แตะอีกครั้ง = ทุ่ม) · พิเศษ (เกจเต็ม) · AUTO (เดินหาศัตรู) · 💬 คุย · 🍙 ไอเทม · ☰ เมนู', 'PUNCH · HVY · KICK · H.KICK · DODGE · BLOCK (hold) · GRAB (tap again = throw) · SP (full meter) · AUTO (walk to foes) · 💬 talk · 🍙 item · ☰ menu')], [T('มือถือ: เดิน/กล้อง', 'Touch: move/camera'), T('จอยซ้ายเดิน (ดันสุด = วิ่ง) · ลากจอขวาหมุนกล้อง · สองนิ้วถ่าง/หุบ = ซูม', 'Left stick (push fully = sprint) · drag right side to look · pinch to zoom')]);
+  else if (d === 'pad') { const i = rows.findIndex(r => r[0] === 'Gamepad'); if (i > 0) rows.unshift(rows.splice(i, 1)[0]); }
   return `<h3>${t('controls')}</h3><table class="controls-tbl">${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>`;
 }

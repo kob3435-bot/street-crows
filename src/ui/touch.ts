@@ -19,7 +19,7 @@ export class TouchControls {
         <div class="tb sp" data-a="special" style="right:20px;bottom:172px">พิเศษ<br><small>SP</small></div>
         <div class="tb autob" data-a="auto" style="right:168px;bottom:158px">AUTO<br><small class="st">OFF</small></div>
       </div>
-      <div class="top"><div class="tb" data-a="interact">E<br><small>คุย</small></div><div class="tb" data-a="item1">🍙</div><div class="tb" data-a="menu">☰</div></div>`;
+      <div class="top"><div class="tb" data-a="interact">💬<br><small>คุย</small></div><div class="tb" data-a="item1">🍙</div><div class="tb" data-a="menu">☰</div></div>`;
     this.sp = r.querySelector('.tb.sp')!; this.autoB = r.querySelector('.tb.autob')!;
     r.querySelectorAll<HTMLElement>('[data-a]').forEach(b => {
       b.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); audio.init(); this.input.press(b.dataset.a as Action); b.classList.add('on'); }, { passive: false });

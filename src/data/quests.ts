@@ -93,12 +93,12 @@ export const QUESTS: QuestDef[] = [
         { s: 'haru', t: T('ฮารุ. ที่นี่มีร้านราเมงอร่อยๆ ไหม? หิวแล้ว', 'Haru. Is there good ramen around here? I\'m starving.') },
         { s: 'kenta', t: T('ร้านมารุอิจิที่ย่านการค้าฮิโนเดะ! เดี๋ยวพาไป... แต่ระวังพวกโอนิงาวาระนะ', 'Maruichi, in the Hinode shopping street! I\'ll take you... but watch out for the Onigawara guys.') },
       ] },
-      { kind: 'goto', place: 'shotengai', obj: T('ไปย่านการค้าฮิโนเดะ (WASD เดิน, Shift วิ่ง)', 'Go to Hinode Shopping Street (WASD move, Shift sprint)') },
-      { kind: 'defeat', enc: 'tut_thugs', obj: T('จัดการพวกรีดไถ (คลิกซ้าย ต่อย / F เตะ)', 'Deal with the extortionists (LMB punch / F kick)'), say: [
+      { kind: 'goto', place: 'shotengai', obj: T('ไปย่านการค้าฮิโนเดะ ({how_move})', 'Go to Hinode Shopping Street ({how_move})') },
+      { kind: 'defeat', enc: 'tut_thugs', obj: T('จัดการพวกรีดไถ ({how_fight})', 'Deal with the extortionists ({how_fight})'), say: [
         { s: 'thug', t: T('เฮ้ย ไอ้หน้าใหม่! ใครเดินผ่านตรงนี้ต้องจ่ายค่าผ่านทาง!', 'Hey, new face! Anyone walking through here pays a toll!') },
         { s: 'haru', t: T('ค่าผ่านทาง? ฉันมีแค่เงินค่าราเมง... งั้นจ่ายเป็นอย่างอื่นละกัน', 'A toll? I only have ramen money... I\'ll pay you in something else.') },
       ], after: [{ s: 'kenta', t: T('ส-สุดยอด!! สองคนในสิบวินาที!', 'A-amazing!! Two guys in ten seconds!') }] },
-      { kind: 'skill', obj: T('กด Tab → สกิล แล้วเรียนสกิลแรก', 'Press Tab → Skills and learn your first skill'), say: [{ s: 'kenta', t: T('นายน่าจะฝึกอะไรเพิ่มนะ ลองเปิดเมนู (Tab) ดูสิ', 'You should train a bit. Open the menu (Tab) and check your skills.') }] },
+      { kind: 'skill', obj: T('{how_skills} แล้วเรียนสกิลแรก', '{how_skills} and learn your first skill'), say: [{ s: 'kenta', t: T('นายน่าจะฝึกอะไรเพิ่มนะ ลองเปิดเมนู (Tab) ดูสิ', 'You should train a bit. Open the menu (Tab) and check your skills.') }] },
       { kind: 'goto', place: 'ramen', obj: T('ไปร้านราเมงมารุอิจิ', 'Go to Maruichi Ramen'), say: [
         { s: 'saeko', t: T('พวกโอนิงาวาระโดนจัดการแล้ว? ...นายเหรอ? ชามนี้ร้านเลี้ยง!', 'Somebody beat the Onigawara guys? ...You? This bowl\'s on the house!') },
         { s: 'haru', t: T('งั้นขอชามใหญ่พิเศษ สามชาม', 'Then one mega bowl. Make it three.') },
@@ -126,7 +126,7 @@ export const QUESTS: QuestDef[] = [
         ] },
         { s: 'onoda', t: T('...ไอ้บ้านี่ ไม่เหมือนใครจริงๆ', '...This idiot is like nobody else.') },
       ] },
-      { kind: 'interact', target: 'door_roof', obj: T('ขึ้นไปดาดฟ้า (ประตูหน้าอาคารเรียน กด E)', 'Go up to the rooftop (school door, press E)'), say: [{ s: 'kenta', t: T('ว่าแต่... บนดาดฟ้ามีรุ่นพี่ตัวใหญ่ที่ไม่ยุ่งกับใครอยู่คนนึง', 'By the way... there\'s a huge senpai on the roof who keeps to himself.') }] },
+      { kind: 'interact', target: 'door_roof', obj: T('ขึ้นไปดาดฟ้า (ประตูหน้าอาคารเรียน {how_interact})', 'Go up to the rooftop (school door, {how_interact})'), say: [{ s: 'kenta', t: T('ว่าแต่... บนดาดฟ้ามีรุ่นพี่ตัวใหญ่ที่ไม่ยุ่งกับใครอยู่คนนึง', 'By the way... there\'s a huge senpai on the roof who keeps to himself.') }] },
       { kind: 'talk', target: 'npc_daigo', obj: T('คุยกับรุ่นพี่บนดาดฟ้า', 'Talk to the senpai on the rooftop'), say: [
         { s: 'daigo', t: T('...นายคือคนที่ล้มโอโนดะ แล้วยังปฏิเสธตำแหน่งอีก', '...You beat Onoda and turned down the throne.') },
         { s: 'haru', t: T('ตำแหน่งกินไม่ได้นี่ ลมบนนี้เย็นดีนะ', 'Can\'t eat a throne. Nice breeze up here.') },
@@ -145,7 +145,7 @@ export const QUESTS: QuestDef[] = [
       { kind: 'boss', enc: 'haku_boss', obj: T('ดวลกับคิริชิมะ จิน "กระจกเงา"', 'Duel Jin "The Mirror" Kirishima'), say: [
         { s: 'kirishima', t: T('ข้าคิริชิมะ ขอโทษเรื่องลูกน้อง สมุดคืนให้แล้ว แต่ข้าอยากรู้ ว่าพลังไร้แบบแผนของเจ้าเป็นของจริงหรือเปล่า', 'I am Kirishima. My apologies for my men; the notebook is returned. But I must know if your formless power is real.') },
         { s: 'haru', t: T('พูดเพราะจัง งั้นมาเลย', 'So polite. Come on then.') },
-        { s: 'narrator', t: T('เคล็ดลับ: คิริชิมะสวนกลับเก่ง — ลองจับทุ่ม (G) หรือท่าหนักทำลายการ์ด', 'Tip: Kirishima counters strikes. Try grabs (G) or heavy guard-breakers.') },
+        { s: 'narrator', t: T('เคล็ดลับ: คิริชิมะสวนกลับเก่ง — ลองจับทุ่ม{grab} หรือท่าหนักทำลายการ์ด', 'Tip: Kirishima counters strikes. Try grabs{grab} or heavy guard-breakers.') },
       ], after: [
         { s: 'kirishima', t: T('...นี่คือความรู้สึกของการแพ้ ข้าไม่เคยรู้ว่ามันทำให้ใจเต้นแรงขนาดนี้', '...So this is losing. I never knew it could make my heart race.') },
         { s: 'haru', t: T('ครั้งหน้าไม่ต้องตั้งแถวมานะ มาคนเดียวก็พอ สนุกกว่า', 'Next time skip the formation. Just come alone. It\'s more fun.'), choices: [
@@ -166,7 +166,7 @@ export const QUESTS: QuestDef[] = [
       { kind: 'boss', enc: 'tetsu_boss', obj: T('ดวลกับโกดะ "เครนเหล็ก"', 'Duel Tetsuzo "Iron Crane" Goda'), say: [
         { s: 'goda', t: T('...กลับไปซะ ข้าไม่อยากทำร้ายคนเพิ่ม', '...Go home. I don\'t want to hurt anyone else.') },
         { s: 'haru', t: T('หมัดของนายดูเศร้าๆ นะ มาคุยกันด้วยหมัดดีกว่า', 'Your fists look sad. Let\'s talk with them.') },
-        { s: 'narrator', t: T('เคล็ดลับ: โกดะช้าแต่หนัก หลบ (Space) แล้วสวนตอนเขาเหวี่ยงพลาด', 'Tip: Goda is slow but brutal. Dodge (Space) and punish his whiffs.') },
+        { s: 'narrator', t: T('เคล็ดลับ: โกดะช้าแต่หนัก หลบ{dodge} แล้วสวนตอนเขาเหวี่ยงพลาด', 'Tip: Goda is slow but brutal. Dodge{dodge} and punish his whiffs.') },
       ], after: [
         { s: 'goda', t: T('...พวกคาเงโรหลอกน้องข้าให้เป็นหนี้ ถ้าไม่ทำตามมันจะทำร้ายมิโนรุ', '...The Kagero crew tricked my brother into debt. If I refuse, they hurt Minoru.') },
         { s: 'haru', t: T('งั้นเรื่องง่าย ไปเตะคนถือสายจูงกัน', 'Then it\'s simple. Let\'s go kick the guy holding the leash.') },
@@ -180,7 +180,7 @@ export const QUESTS: QuestDef[] = [
       { kind: 'boss', enc: 'roof_boss', obj: T('ดวลกับฮายาเตะ เร็น "คามาอิทาจิ"', 'Duel Ren "Kamaitachi" Hayate'), say: [
         { s: 'hayate', t: T('เมืองนี้ต้องมีราชาคนเดียว ฉันแค่เร่งให้มันเกิดเร็วขึ้น นายก็เห็นด้วยใช่ไหม ฮารุ?', 'This city needs one king. I just sped things up. You agree, right, Haru?') },
         { s: 'haru', t: T('ไม่ ราชามันน่าเบื่อ แล้วนายก็ทำให้น้องโกดะร้องไห้', 'No. Kings are boring. And you made Goda\'s little brother cry.') },
-        { s: 'narrator', t: T('เคล็ดลับ: ฮายาเตะเร็วมาก ใช้การ์ด (Q) แล้วสวนกลับ หรือจับทุ่มเมื่อเขาเข้าใกล้', 'Tip: Hayate is very fast. Block (Q) then counter, or grab him when he closes in.') },
+        { s: 'narrator', t: T('เคล็ดลับ: ฮายาเตะเร็วมาก ใช้การ์ด{block} แล้วสวนกลับ หรือจับทุ่มเมื่อเขาเข้าใกล้', 'Tip: Hayate is very fast. Block{block} then counter, or grab him when he closes in.') },
       ], after: [
         { s: 'hayate', t: T('ทำไม...คนที่ไม่อยากเป็นราชาถึงแข็งแกร่งที่สุด...', 'Why... is the one who doesn\'t want the crown the strongest...') },
         { s: 'narrator', t: T('ประตูดาดฟ้าเปิดออก โอโนดะ ไดโกะ คิริชิมะ และโกดะ ยืนอยู่ตรงนั้น', 'The rooftop door opens. Onoda, Daigo, Kirishima and Goda stand there.') },
@@ -234,9 +234,9 @@ export const QUESTS: QuestDef[] = [
       { kind: 'defeat', enc: 'ch4_riders', obj: T('ล้มแก๊งยามิคาเซะและไนโตร', 'Beat the Yamikaze riders and Nitro'), say: [{ s: 'kuroki', t: T('ไนโตรไม่แพ้ซ้ำสองนะเว้ย!', 'Nitro doesn\'t lose twice, man!') }], after: [{ s: 'kuroki', t: T('ชิ... ยักษ์แดงจ่ายดีกว่าค่าผ่านทางนี่หว่า', 'Tch... the Red Oni pays better than tolls, man.') }] },
       { kind: 'boss', enc: 'ch4_baba', obj: T('ทะลวง "กำแพง" บาบะ ในซอยหลังย่านการค้า', 'Break through "The Wall" Baba in the back alleys'), say: [
         { s: 'baba', t: T('...ห้ามผ่าน', '...Nobody passes.') }, { s: 'haru', t: T('อ้อมได้ไหม', 'Can I go around?') }, { s: 'baba', t: T('...ไม่ได้', '...No.') },
-        { s: 'narrator', t: T('เคล็ดลับ: บาบะป้องกันเก่งมาก ใช้จับทุ่ม (G) หรือเตะหนัก (C) เพื่อทำลายการ์ด', 'Tip: Baba blocks everything. Grab (G) or heavy kick (C) to break his guard.') }],
+        { s: 'narrator', t: T('เคล็ดลับ: บาบะป้องกันเก่งมาก ใช้จับทุ่ม{grab} หรือเตะหนัก{hkick} เพื่อทำลายการ์ด', 'Tip: Baba blocks everything. Grab{grab} or heavy kick{hkick} to break his guard.') }],
         after: [{ s: 'baba', t: T('...ร้าวแล้ว อาคางิซังรออยู่ที่ประตูอาร์เคด', '...Cracked. Akagi-san waits at the arcade gate.') }] },
-      { kind: 'boss', enc: 'ch4_akagi', obj: T('ล้ม "ยักษ์แดง" อาคางิ', 'Defeat "Red Oni" Akagi'), say: [
+      { kind: 'boss', enc: 'ch4_akagi', heal: true, obj: T('ล้ม "ยักษ์แดง" อาคางิ', 'Defeat "Red Oni" Akagi'), say: [
         { s: 'akagi', t: T('แกคือเด็กที่ล้มรุ่นน้องฉันเหรอ ฮ่าๆ! อาร์เคดนี่ทำเลทอง ฉันจะเก็บ... พร้อมดอกเบี้ย!', 'So you\'re the kid who beat my juniors? HAHA! This arcade is prime real estate. I\'ll collect it, with interest!') },
         { s: 'mogami', t: T('จ-จัดการมันเลยอาคางิเซมไป! ผมจ่ายล่วงหน้าแล้วนะ!', 'G-get him, Akagi-senpai! I paid you in advance!') },
         { s: 'haru', t: T('ราเมงของซาเอโกะอยู่ที่นี่ ฉันก็เลยอยู่ที่นี่', 'Saeko\'s ramen is here. So I\'m here.') }],

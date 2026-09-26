@@ -24,7 +24,8 @@ export class PlayerHabits {
 /** Limits how many enemies may attack one target at a time (1-2), so groups surround instead of dog-piling. */
 export class AttackCoordinator {
   private holders = new Map<number, Set<number>>();
-  maxFor(targetId: number, engaged: number) { return engaged >= 4 ? 2 : engaged >= 2 ? (Math.random() < 0.5 ? 1 : 2) : 1; }
+  gentle = false; // prologue: one attacker at a time while the player learns the basics
+  maxFor(targetId: number, engaged: number) { if (this.gentle) return 1; return engaged >= 4 ? 2 : engaged >= 2 ? (Math.random() < 0.5 ? 1 : 2) : 1; }
   request(f: Fighter, target: Fighter, engaged: number, force = false): boolean {
     let s = this.holders.get(target.id); if (!s) { s = new Set(); this.holders.set(target.id, s); }
     if (s.has(f.id)) return true;
