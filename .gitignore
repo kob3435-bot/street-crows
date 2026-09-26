@@ -1,0 +1,6 @@
+node_modules
+test-results
+*.log
+dist
+screenshots
+test-results.json

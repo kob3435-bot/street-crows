@@ -1,0 +1,26 @@
+import { launch, open, shot, state, dbg, sleep } from './lib.mjs';
+const b = await launch();
+const { page, logs } = await open(b, 'test=1&newgame=1');
+await sleep(1500);
+await dbg(page, 'skipDialogue');
+const s0 = await state(page);
+await page.keyboard.down('KeyW'); await sleep(2000); await page.keyboard.up('KeyW');
+const s1 = await state(page); console.log('moved', Math.hypot(s1.x - s0.x, s1.z - s0.z).toFixed(2), s1.active);
+await shot(page, '02_walk');
+await dbg(page, 'spawn', 'kurogane', 3, 6); await dbg(page, 'bot', true);
+await sleep(2500); await shot(page, '03_fight');
+for (let i = 0; i < 20; i++) { await sleep(1000); const s = await state(page); if (s.fighters === 0) break; }
+console.log('after fight', await state(page));
+await dbg(page, 'bot', false);
+await page.keyboard.press('Tab'); await sleep(600); await shot(page, '04_menu_quests');
+await page.click('[data-t="skills"]'); await sleep(300); await shot(page, '05_menu_skills');
+await page.click('[data-t="map"]'); await sleep(300); await shot(page, '06_menu_map');
+await page.click('[data-t="style"]'); await sleep(300); await shot(page, '07_menu_style');
+await page.keyboard.press('Tab'); await sleep(300);
+await dbg(page, 'setTime', 21.5); await dbg(page, 'teleport', 'shotengai'); await sleep(2500); await shot(page, '08_night');
+await dbg(page, 'setTime', 17.8); await dbg(page, 'teleport', 'park'); await dbg(page, 'god', true);
+await dbg(page, 'spawn', 'goda', 1, 5); await dbg(page, 'bot', true); await sleep(4000); await shot(page, '09_boss');
+console.log(await state(page));
+console.log('fps', await page.evaluate(() => window.__game.renderer.fps));
+console.log(logs.join('\n'), await page.evaluate(() => window.__game.errors));
+await b.close();

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "visual: screenshots captured (day/combat/boss/golden/night/rooftop)",
+    "ok": true,
+    "info": "heavy/counter hits during combat capture: 9; fps(swiftshader, high) 10.0"
+  },
+  {
+    "name": "visual run: zero console/runtime errors (quality high)",
+    "ok": true,
+    "info": ""
+  }
+]
