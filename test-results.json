@@ -37,7 +37,7 @@
   {
     "name": "movement: WASD + Shift sprint moves player",
     "ok": true,
-    "info": "moved 12.0 m"
+    "info": "moved 12.4 m"
   },
   {
     "name": "combat input: LMB/RMB/F produce attacks",
@@ -82,7 +82,7 @@
   {
     "name": "render: frames rendering",
     "ok": true,
-    "info": "fps 12.9 (software GL), draw calls 241"
+    "info": "fps 13.1 (software GL), draw calls 241"
   },
   {
     "name": "boot: zero console/runtime errors (desktop)",
@@ -92,27 +92,27 @@
   {
     "name": "combat: player beats 3 grunts (no god mode, no items)",
     "ok": true,
-    "info": "10s sim, HP left 81/100"
+    "info": "20s sim, HP left 49/100"
   },
   {
     "name": "progression: EXP / money / rep gained from fights",
     "ok": true,
-    "info": "exp 69 lvl 1 ¥704 rep 18"
+    "info": "exp 69 lvl 1 ¥732 rep 18"
   },
   {
     "name": "AI: attack-token system (<=2 simultaneous attackers of 6)",
     "ok": true,
-    "info": "max 1; mode mix {\"approach\":38,\"circle\":5311,\"feint\":273,\"attack\":984,\"recover\":594}"
+    "info": "max 1; mode mix {\"circle\":5355,\"approach\":65,\"feint\":294,\"attack\":951,\"recover\":535}"
   },
   {
     "name": "AI: uses spacing/circling (not just walk-up-and-spam)",
     "ok": true,
-    "info": "{\"approach\":38,\"circle\":5311,\"feint\":273,\"attack\":984,\"recover\":594}"
+    "info": "{\"circle\":5355,\"approach\":65,\"feint\":294,\"attack\":951,\"recover\":535}"
   },
   {
     "name": "AI: tracks player habits (punch spam detected)",
     "ok": true,
-    "info": "punch habit 0.4 -> 15.8, punchSpam=true"
+    "info": "punch habit 0.2 -> 16.5, punchSpam=true"
   },
   {
     "name": "progression: level up grants stat + skill points",
@@ -197,7 +197,7 @@
   {
     "name": "bosses: 3-phase transitions happen (phase 2 & final)",
     "ok": true,
-    "info": "onoda:1,onoda:1,onoda:2,kuroki:1,kuroki:2,kirishima:1,kirishima:1,kirishima:2,kirishima:1,kirishima:1,kirishima:2,tsukiyo:1,tsukiyo:2,tsukiyo:1,tsukiyo:2,goda:1,goda:2,hayate:1,hayate:2"
+    "info": "onoda:1,onoda:2,kuroki:1,kuroki:2,kirishima:1,kirishima:2,kirishima:1,kirishima:2,tsukiyo:1,tsukiyo:2,tsukiyo:1,tsukiyo:2,goda:1,goda:2,goda:1,goda:2,hayate:1,hayate:1,hayate:2"
   },
   {
     "name": "story: chapter 1-3 finished, gangs turned friendly",
@@ -222,7 +222,7 @@
   {
     "name": "load: level/EXP/skills/quests/relations/customization/position restored",
     "ok": true,
-    "info": "{\"level\":3,\"exp\":130,\"skills\":[\"iron_fist\",\"thick_skin\"],\"done\":[\"tutorial\"],\"active\":[\"main1\",\"side_cat\"],\"rel\":62,\"hair\":\"mohawk\",\"money\":1604,\"x\":-120,\"z\":40,\"clock\":19}"
+    "info": "{\"level\":3,\"exp\":130,\"skills\":[\"iron_fist\",\"thick_skin\"],\"done\":[\"tutorial\"],\"active\":[\"main1\",\"side_cat\"],\"rel\":62,\"hair\":\"mohawk\",\"money\":1638,\"x\":-120,\"z\":39,\"clock\":19}"
   },
   {
     "name": "autosave: written after key event (debounced)",
@@ -267,7 +267,7 @@
   {
     "name": "bounds: player cannot leave the map (4 edges, 8 s sprint each)",
     "ok": true,
-    "info": "[[197.55,197.6,0.1],[197.55,-197.6,0.3],[197.55,0.5,197.6],[197.55,54.8,-197.6]]"
+    "info": "[[197.55,197.6,-0.1],[197.55,-197.6,-1.2],[197.55,0.2,197.6],[197.55,54.8,-197.6]]"
   },
   {
     "name": "bounds: never falls through the ground (y >= 0)",
@@ -287,7 +287,7 @@
   {
     "name": "combat: no hits through walls (both directions)",
     "ok": true,
-    "info": "{\"dist\":1.45,\"tries\":27,\"hits\":0,\"playerHpLost\":-36,\"enemyHpLost\":0,\"controlHitsWithoutWall\":9}"
+    "info": "{\"dist\":1.45,\"tries\":27,\"hits\":0,\"playerHpLost\":0,\"enemyHpLost\":0,\"controlHitsWithoutWall\":9}"
   },
   {
     "name": "world rules: zero runtime errors",
@@ -312,7 +312,7 @@
   {
     "name": "mobile portrait: virtual joystick moves the player",
     "ok": true,
-    "info": "moved 18.8 m"
+    "info": "moved 19.0 m"
   },
   {
     "name": "mobile portrait: drag on right side rotates camera",
@@ -332,7 +332,7 @@
   {
     "name": "mobile portrait: zero console/runtime errors",
     "ok": true,
-    "info": " fps(swiftshader) 41.0"
+    "info": " fps(swiftshader) 42.6"
   },
   {
     "name": "mobile landscape: coarse pointer detected, low quality auto-selected",
@@ -352,7 +352,7 @@
   {
     "name": "mobile landscape: virtual joystick moves the player",
     "ok": true,
-    "info": "moved 19.0 m"
+    "info": "moved 18.3 m"
   },
   {
     "name": "mobile landscape: drag on right side rotates camera",
@@ -372,12 +372,12 @@
   {
     "name": "mobile landscape: zero console/runtime errors",
     "ok": true,
-    "info": " fps(swiftshader) 31.0"
+    "info": " fps(swiftshader) 36.4"
   },
   {
     "name": "visual: screenshots captured (day/combat/boss/golden/night/rooftop)",
     "ok": true,
-    "info": "heavy/counter hits during combat capture: 9; fps(swiftshader, high) 10.0"
+    "info": "heavy/counter hits during combat capture: 11; fps(swiftshader, high) 10.0"
   },
   {
     "name": "visual run: zero console/runtime errors (quality high)",
@@ -387,7 +387,7 @@
   {
     "name": "gamepad: left stick moves, right stick turns camera",
     "ok": true,
-    "info": "moved 3.6 m, dyaw -0.40"
+    "info": "moved 3.4 m, dyaw -0.40"
   },
   {
     "name": "gamepad: X/Y/B trigger punch/heavy/kick",
@@ -437,12 +437,12 @@
   {
     "name": "camera: wall collision pulls in smoothly (no jitter while standing still)",
     "ok": true,
-    "info": "dist 3.59, spread 0.000"
+    "info": "dist 1.40, spread 0.000"
   },
   {
     "name": "camera: buildings between camera and player are cut away",
     "ok": true,
-    "info": "137/240 samples had cut buildings; max 6"
+    "info": "149/240 samples had cut buildings; max 5"
   },
   {
     "name": "camera: auto-framing widens with several engaged enemies",
@@ -457,7 +457,7 @@
   {
     "name": "camera: gamepad D-pad down/up zooms out/in",
     "ok": true,
-    "info": "11 -> 12.3 -> 9.9"
+    "info": "11 -> 12.3 -> 9.7"
   },
   {
     "name": "gamepad: L3 toggles AUTO",
@@ -487,32 +487,32 @@
   {
     "name": "AUTO: under attack by 3 enemies, still never attacks/blocks/dodges (HP of all enemies unchanged)",
     "ok": true,
-    "info": "{\"hp0\":[66,66,88],\"hp1\":[66,66,88],\"swings\":0,\"hits\":0,\"bad\":[],\"st\":\"engage\",\"near\":1.8694516406663169}"
+    "info": "{\"hp0\":[66,88,66],\"hp1\":[66,88,66],\"swings\":0,\"hits\":0,\"bad\":[],\"st\":\"seek\",\"near\":2.5521409378171716}"
   },
   {
     "name": "AUTO: targets nearest, re-targets when the target is defeated",
     "ok": true,
-    "info": "{\"first\":true,\"second\":true,\"d2\":1.7391976572874022,\"st\":\"engage\"}"
+    "info": "{\"first\":true,\"second\":true,\"d2\":1.7496136791921941,\"st\":\"engage\"}"
   },
   {
     "name": "AUTO: player movement input takes over (moves away while held)",
     "ok": true,
-    "info": "{\"d0\":14.830080766402848,\"dMan\":19.930126623256346,\"stMan\":\"manual\",\"stHold\":\"manual\",\"dAfter\":1.7982384146790233,\"st\":\"engage\"}"
+    "info": "{\"d0\":14.114953935231743,\"dMan\":19.21499979208516,\"stMan\":\"manual\",\"stHold\":\"manual\",\"dAfter\":1.7516702811423135,\"st\":\"engage\"}"
   },
   {
     "name": "AUTO: resumes ~0.5 s after input stops",
     "ok": true,
-    "info": "dist 19.9 -> 1.8"
+    "info": "dist 19.2 -> 1.8"
   },
   {
     "name": "AUTO: pauses during dialogue, resumes after",
     "ok": true,
-    "info": "{\"moved\":0,\"st\":\"paused\",\"moved2\":12.21334068112699,\"d0\":13.999999999999995,\"st2\":\"engage\",\"dlg\":false,\"skips\":1,\"ps\":\"idle\"}"
+    "info": "{\"moved\":0,\"st\":\"paused\",\"moved2\":10.199434256675767,\"d0\":12,\"st2\":\"engage\",\"dlg\":false,\"skips\":1,\"ps\":\"idle\"}"
   },
   {
     "name": "AUTO: never targets civilians / friendly gang members; shows \"no enemies\" toast",
     "ok": true,
-    "info": "{\"friendlyHostile\":false,\"target\":null,\"moved\":0.030749335313449387,\"toasts\":1,\"st\":\"none\"}"
+    "info": "{\"friendlyHostile\":false,\"target\":null,\"moved\":0.0009285494699335524,\"toasts\":1,\"st\":\"none\"}"
   },
   {
     "name": "AUTO: T key toggles on/off",
@@ -537,7 +537,7 @@
   {
     "name": "mobile portrait: AUTO walks toward the enemy group",
     "ok": true,
-    "info": "moved 6.5 m toward the group (they also close in), nearest enemy 2.5 m; cam dist 16.4 (zoom 11, portrait x1.22)"
+    "info": "moved 14.2 m toward the group (they also close in), nearest enemy 2.1 m; cam dist 16.4 (zoom 11, portrait x1.22)"
   },
   {
     "name": "mobile portrait: zero console errors",
@@ -557,7 +557,7 @@
   {
     "name": "mobile landscape: AUTO walks toward the enemy group",
     "ok": true,
-    "info": "moved 8.4 m toward the group (they also close in), nearest enemy 1.3 m; cam dist 13.4 (zoom 11, portrait x1.22)"
+    "info": "moved 12.4 m toward the group (they also close in), nearest enemy 0.9 m; cam dist 13.4 (zoom 11, portrait x1.22)"
   },
   {
     "name": "mobile landscape: zero console errors",
@@ -567,12 +567,12 @@
   {
     "name": "story: quest completable by bot: tutorial",
     "ok": true,
-    "info": "Lv2, downs 0, iters 11"
+    "info": "Lv2, downs 0, iters 10"
   },
   {
     "name": "story: quest completable by bot: main1",
     "ok": true,
-    "info": "Lv4, downs 1, iters 65"
+    "info": "Lv4, downs 0, iters 34"
   },
   {
     "name": "story: quest completable by bot: side_cat",
@@ -582,132 +582,132 @@
   {
     "name": "story: quest completable by bot: side_ramen",
     "ok": true,
-    "info": "Lv5, downs 0, iters 17"
+    "info": "Lv5, downs 0, iters 16"
   },
   {
     "name": "story: quest completable by bot: side_mikami",
     "ok": true,
-    "info": "Lv5, downs 0, iters 18"
+    "info": "Lv5, downs 0, iters 21"
   },
   {
     "name": "story: quest completable by bot: side_yamikaze",
     "ok": true,
-    "info": "Lv6, downs 0, iters 30"
+    "info": "Lv6, downs 0, iters 31"
   },
   {
     "name": "story: quest completable by bot: side_ryo",
     "ok": true,
-    "info": "Lv6, downs 0, iters 28"
+    "info": "Lv7, downs 2, iters 65"
   },
   {
     "name": "story: quest completable by bot: main2",
     "ok": true,
-    "info": "Lv7, downs 1, iters 58"
+    "info": "Lv8, downs 0, iters 39"
   },
   {
     "name": "story: quest completable by bot: side_rumor",
     "ok": true,
-    "info": "Lv8, downs 0, iters 34"
+    "info": "Lv8, downs 0, iters 47"
   },
   {
     "name": "story: quest completable by bot: main3",
     "ok": true,
-    "info": "Lv9, downs 1, iters 104"
+    "info": "Lv10, downs 1, iters 134"
   },
   {
     "name": "story: quest completable by bot: side_kai",
     "ok": true,
-    "info": "Lv10, downs 0, iters 9"
+    "info": "Lv10, downs 0, iters 8"
   },
   {
     "name": "story: quest completable by bot: main4",
     "ok": true,
-    "info": "Lv11, downs 2, iters 177"
+    "info": "Lv11, downs 0, iters 141"
   },
   {
     "name": "story: quest completable by bot: side_taisho",
     "ok": true,
-    "info": "Lv12, downs 0, iters 40"
+    "info": "Lv12, downs 0, iters 41"
   },
   {
     "name": "story: quest completable by bot: side_daigo",
     "ok": true,
-    "info": "Lv12, downs 0, iters 20"
+    "info": "Lv12, downs 0, iters 22"
   },
   {
     "name": "story: quest completable by bot: rematch_onoda",
     "ok": true,
-    "info": "Lv13, downs 0, iters 22"
+    "info": "Lv13, downs 0, iters 21"
   },
   {
     "name": "story: quest completable by bot: main5",
     "ok": true,
-    "info": "Lv14, downs 1, iters 125"
+    "info": "Lv14, downs 0, iters 120"
   },
   {
     "name": "story: quest completable by bot: side_scoop",
     "ok": true,
-    "info": "Lv14, downs 0, iters 44"
+    "info": "Lv14, downs 0, iters 40"
   },
   {
     "name": "story: quest completable by bot: side_tools",
     "ok": true,
-    "info": "Lv15, downs 0, iters 27"
+    "info": "Lv15, downs 0, iters 32"
   },
   {
     "name": "story: quest completable by bot: main6",
     "ok": true,
-    "info": "Lv16, downs 0, iters 129"
+    "info": "Lv16, downs 1, iters 191"
   },
   {
     "name": "story: quest completable by bot: side_granny2",
     "ok": true,
-    "info": "Lv16, downs 0, iters 17"
+    "info": "Lv16, downs 0, iters 27"
   },
   {
     "name": "story: quest completable by bot: side_todoroki",
     "ok": true,
-    "info": "Lv17, downs 0, iters 35"
+    "info": "Lv17, downs 0, iters 32"
   },
   {
     "name": "story: quest completable by bot: main7",
     "ok": true,
-    "info": "Lv18, downs 0, iters 120"
+    "info": "Lv18, downs 0, iters 101"
   },
   {
     "name": "story: quest completable by bot: rematch_kirishima",
     "ok": true,
-    "info": "Lv18, downs 0, iters 29"
+    "info": "Lv18, downs 0, iters 30"
   },
   {
     "name": "story: quest completable by bot: rematch_goda",
     "ok": true,
-    "info": "Lv19, downs 0, iters 31"
+    "info": "Lv19, downs 0, iters 36"
   },
   {
     "name": "story: quest completable by bot: main8",
     "ok": true,
-    "info": "Lv20, downs 0, iters 113"
+    "info": "Lv20, downs 1, iters 155"
   },
   {
     "name": "story: quest completable by bot: main9",
     "ok": true,
-    "info": "Lv22, downs 0, iters 168"
+    "info": "Lv22, downs 0, iters 165"
   },
   {
     "name": "story: quest completable by bot: main10",
     "ok": true,
-    "info": "Lv23, downs 0, iters 123"
+    "info": "Lv23, downs 0, iters 131"
   },
   {
     "name": "story: quest completable by bot: tournament",
     "ok": true,
-    "info": "Lv25, downs 0, iters 131"
+    "info": "Lv25, downs 0, iters 106"
   },
   {
     "name": "story: quest completable by bot: secret_sakaki",
     "ok": true,
-    "info": "Lv27, downs 0, iters 75"
+    "info": "Lv27, downs 0, iters 89"
   },
   {
     "name": "bosses: all 10 bosses + 10 mini-bosses spawn (bossStart)",
@@ -737,7 +737,7 @@
   {
     "name": "balance: level curve rises steadily across the 10 chapters",
     "ok": true,
-    "info": "main1:Lv4 main2:Lv7 main3:Lv9 main4:Lv11 main5:Lv14 main6:Lv16 main7:Lv18 main8:Lv20 main9:Lv22 main10:Lv23"
+    "info": "main1:Lv4 main2:Lv8 main3:Lv10 main4:Lv11 main5:Lv14 main6:Lv16 main7:Lv18 main8:Lv20 main9:Lv22 main10:Lv23"
   },
   {
     "name": "story run: zero runtime errors",
@@ -752,7 +752,7 @@
   {
     "name": "occluders: buildings between camera and fight become see-through (dither fade, full height)",
     "ok": true,
-    "info": "{\"x\":0,\"z\":-50,\"k\":1,\"faded\":1,\"minFade\":0.16349840130467158,\"attr\":0.1634984016418457}"
+    "info": "{\"x\":0,\"z\":-50,\"k\":5,\"faded\":1,\"minFade\":0.16349840130467158,\"attr\":0.1634984016418457}"
   },
   {
     "name": "desktop: fight hint uses keyboard/mouse chips, compact in the top band (no HUD overlap)",
@@ -767,7 +767,7 @@
   {
     "name": "desktop: group-fight screenshot has faded occluders in view",
     "ok": true,
-    "info": "{\"cut\":1,\"props\":4}"
+    "info": "{\"cut\":1,\"props\":0}"
   },
   {
     "name": "hint: click/tap closes it",
@@ -802,7 +802,7 @@
   {
     "name": "touch portrait: key bar hidden, dialogue/objective texts are touch wording",
     "ok": true,
-    "info": "objective \"\", next \"แตะเพื่อไปต่อ ▶\""
+    "info": "objective \"วันแรกที่อาเคโบโนะ▶ มาถึงสถานี\", next \"แตะเพื่อไปต่อ ▶\""
   },
   {
     "name": "touch portrait: hint auto-dismisses after a few seconds",
@@ -837,7 +837,7 @@
   {
     "name": "touch landscape: key bar hidden, dialogue/objective texts are touch wording",
     "ok": true,
-    "info": "objective \"วันแรกที่อาเคโบโนะ▶ มาถึงสถานี\", next \"แตะเพื่อไปต่อ ▶\""
+    "info": "objective \"วันแรกที่อาเคโบโนะ▶ ไปย่านการค้าฮิโนเดะ (จอยซ้ายเดิน, ดันสุด\", next \"แตะเพื่อไปต่อ ▶\""
   },
   {
     "name": "touch landscape: hint auto-dismisses after a few seconds",
@@ -867,17 +867,17 @@
   {
     "name": "density: standing in any territory shows ≥3 groups (≥2 hostile) within 80 m",
     "ok": true,
-    "info": "kurogane:6g/3h/22f hakuryu:9g/7h/33f residential_n:7g/6h/32f residential_w:8g/5h/35f alleys:8g/8h/36f shotengai:8g/8h/35f office_e:7g/6h/25f park:5g/4h/19f residential_c:9g/9h/35f parking:7g/7h/28f station:8g/5h/30f riverside:7g/3h/28f tetsuwan:5g/3h/21f warehouse:5g/4h/21f"
+    "info": "kurogane:6g/5h/21f hakuryu:9g/9h/36f residential_n:8g/8h/32f residential_w:8g/4h/36f alleys:9g/8h/34f shotengai:8g/8h/35f office_e:7g/7h/25f park:5g/4h/20f residential_c:8g/7h/36f parking:7g/6h/31f station:8g/5h/35f riverside:7g/4h/34f tetsuwan:5g/4h/18f warehouse:5g/4h/20f"
   },
   {
     "name": "density: simultaneous street fighters stay within the active cap",
     "ok": true,
-    "info": "max 31 / cap 36"
+    "info": "max 32 / cap 36"
   },
   {
     "name": "density: cleared group respawns fast (28–50 s) and comes back",
     "ok": true,
-    "info": "{\"dt\":44.8,\"back\":true}"
+    "info": "{\"dt\":37.6,\"back\":true}"
   },
   {
     "name": "fights: attack-token limit holds with 12 attackers (≤2 simultaneous)",
@@ -887,12 +887,12 @@
   {
     "name": "AUTO long-range: no enemy within radius -> travels to a group >150 m away in a different zone (status \"travel\")",
     "ok": true,
-    "info": "{\"z0\":\"residential_c\",\"zT\":\"warehouse\",\"d0\":174,\"maxFar\":174,\"zones\":[\"residential_c\",\"riverside\",\"warehouse\"]}"
+    "info": "{\"z0\":\"residential_c\",\"zT\":\"warehouse\",\"d0\":175,\"maxFar\":175,\"zones\":[\"residential_c\",\"riverside\",\"warehouse\"]}"
   },
   {
     "name": "AUTO long-range: arrives in attack range of that group (engage) via cross-zone A*, never in walls/water/off-map",
     "ok": true,
-    "info": "{\"arrived\":true,\"dEnd\":2.04,\"t\":23.2,\"solid\":0,\"oob\":0,\"giveUp\":[]}"
+    "info": "{\"arrived\":true,\"dEnd\":2.08,\"t\":24.5,\"solid\":0,\"oob\":0,\"giveUp\":[]}"
   },
   {
     "name": "AUTO long-range: never attacked/blocked/dodged on the way or on arrival",
@@ -907,7 +907,7 @@
   {
     "name": "AUTO long-range: unreachable goal -> gives up (\"unreachable\"), bans it and picks another group",
     "ok": true,
-    "info": "{\"k0\":\"s:21\",\"fakeKey\":\"s:74\",\"why\":\"unreachable\",\"banned\":true,\"k1\":\"s:21\",\"st\":\"engage\",\"backupKey\":\"s:73\"}"
+    "info": "{\"k0\":\"s:21\",\"fakeKey\":\"s:74\",\"why\":\"unreachable\",\"banned\":true,\"k1\":\"s:21\",\"st\":\"seek\",\"backupKey\":\"s:22\"}"
   },
   {
     "name": "AUTO stuck detection: no progress -> re-plans (autoStuck), 3 strikes -> gives up and bans that goal",
@@ -922,12 +922,12 @@
   {
     "name": "AUTO: when no hostiles exist at all, a nearby group is spawned and AUTO heads to it",
     "ok": true,
-    "info": "{\"forced\":1,\"st\":\"seek\",\"key\":\"s:43\",\"ready\":true,\"hostile\":true,\"spawned\":true}"
+    "info": "{\"forced\":1,\"st\":\"seek\",\"key\":\"s:70\",\"ready\":true,\"hostile\":true,\"spawned\":true}"
   },
   {
     "name": "AUTO long-range: prefers the tracked quest fight over a closer random group",
     "ok": true,
-    "info": "{\"quest\":\"main4\",\"first\":\"q:ch4_arcade\",\"questDist\":118,\"closerSite\":63}"
+    "info": "{\"quest\":\"main4\",\"first\":\"q:ch4_arcade\",\"questDist\":122,\"closerSite\":61}"
   },
   {
     "name": "density/AUTO sim tests: zero runtime errors",
@@ -937,7 +937,7 @@
   {
     "name": "AUTO indicator (desktop): \"AUTO: กำลังเดินหาศัตรู · NNNm ↗\" with direction arrow, fully visible",
     "ok": true,
-    "info": "{\"txt\":\"AUTO: กำลังเดินหาศัตรู · 228m ↗\",\"far\":true,\"vis\":true,\"fits\":true,\"r\":[533,677,214],\"vw\":1280,\"st\":\"travel\"} screenshots/p04_auto_longrange_indicator.png"
+    "info": "{\"txt\":\"AUTO: กำลังเดินหาศัตรู · 226m ↗\",\"far\":true,\"vis\":true,\"fits\":true,\"r\":[533,677,214],\"vw\":1280,\"st\":\"travel\"} screenshots/p04_auto_longrange_indicator.png"
   },
   {
     "name": "AUTO indicator (desktop) page: zero console errors",
@@ -947,7 +947,7 @@
   {
     "name": "AUTO indicator (phone): \"AUTO: กำลังเดินหาศัตรู · NNNm ↗\" with direction arrow, fully visible",
     "ok": true,
-    "info": "{\"txt\":\"AUTO: กำลังเดินหาศัตรู · 219m ↗\",\"far\":true,\"vis\":true,\"fits\":true,\"r\":[202,543,198],\"vw\":412,\"st\":\"travel\"} screenshots/p05_auto_longrange_mobile.png"
+    "info": "{\"txt\":\"AUTO: กำลังเดินหาศัตรู · 222m ↗\",\"far\":true,\"vis\":true,\"fits\":true,\"r\":[201,543,199],\"vw\":412,\"st\":\"travel\"} screenshots/p05_auto_longrange_mobile.png"
   },
   {
     "name": "AUTO indicator (phone) page: zero console errors",
@@ -955,13 +955,13 @@
     "info": ""
   },
   {
-    "name": "perf quality=1: frame time not dramatically worse with ~34 vs 10 fighters nearby",
+    "name": "perf quality=1: frame time not dramatically worse with ~30 vs 10 fighters nearby",
     "ok": true,
-    "info": "now med 99.9 ms / p90 116.6 ms / sim 0.04 ms/step; before med 83.4 / p90 100 / sim 0.017"
+    "info": "now med 83.3 ms / p90 99.9 ms / sim 0.049 ms/step; before med 83.4 / p90 100 / sim 0.017"
   },
   {
-    "name": "perf quality=0: frame time not dramatically worse with ~26 vs 10 fighters nearby",
+    "name": "perf quality=0: frame time not dramatically worse with ~24 vs 10 fighters nearby",
     "ok": true,
-    "info": "now med 33.3 ms / p90 49.9 ms / sim 0.048 ms/step; before med 33.3 / p90 33.4 / sim 0.021"
+    "info": "now med 33.3 ms / p90 33.4 ms / sim 0.051 ms/step; before med 33.3 / p90 33.4 / sim 0.021"
   }
 ]

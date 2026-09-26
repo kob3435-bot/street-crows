@@ -206,8 +206,8 @@ export class HUD {
   /** Rendered width of a name label (canvas text metrics, cached) for the declutter pass. */
   private labelW(label: string, big: boolean) {
     const key = (big ? 'B' : 's') + label; let v = this.lwCache.get(key); if (v !== undefined) return v;
-    if (!this.lwCtx) { this.lwCtx = document.createElement('canvas').getContext('2d'); this.lwFont = getComputedStyle(this.root).fontFamily || 'sans-serif'; }
-    this.lwCtx!.font = `700 ${big ? 12 : 11}px ${this.lwFont}`; v = this.lwCtx!.measureText(label).width + 2; this.lwCache.set(key, v); return v;
+    if (!this.lwCtx) { this.lwCtx = document.createElement('canvas').getContext('2d'); this.lwFont = getComputedStyle(this.root).fontFamily || 'sans-serif'; document.fonts?.addEventListener?.('loadingdone', () => this.lwCache.clear()); } // web fonts arriving late change widths
+    this.lwCtx!.font = `700 ${big ? 12 : 11}px ${this.lwFont}`; v = this.lwCtx!.measureText(label).width * 1.06 + 3; if (document.fonts && document.fonts.status !== 'loaded') return v; this.lwCache.set(key, v); return v; // don't cache fallback-font widths
   }
   private hideMarker() { const m = this.tags.querySelector('.marker') as HTMLElement; if (m) m.style.display = 'none'; }
   private drawMinimap() {
