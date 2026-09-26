@@ -124,7 +124,7 @@ src/
 
 ## Deploying
 `dist/` is a static site with relative asset paths (`base: './'`). Options:
-- **GitHub Pages**: push this repo and serve `dist/` (for example with a `gh-pages` branch or an Actions workflow).
+- **GitHub Pages** (live): `.github/workflows/deploy.yml` runs `npm ci && npm run build` on every push to `main` and deploys `dist/` with actions/deploy-pages (Pages source = GitHub Actions). Because `base: './'`, the same build works under a project subpath (`/street-crows/`) and at a domain root.
 - **Netlify / Vercel / Cloudflare Pages**: build command `npm run build`, publish directory `dist`.
 
 ## Tests (v0.1 status)
