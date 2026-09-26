@@ -26,6 +26,8 @@ export interface AIParams {
   patience: number;       // seconds it is willing to wait for an opening
   grabRate: number;       // how often it uses grabs vs guard
   feint: number;          // chance to feint (step in, step out)
+  hitRun?: number;        // 1 = hit-and-run: sprints far out after every combo (Hayate-style)
+  guardStance?: number;   // chance per decision to hold guard while circling (Kirishima-style turtles)
 }
 
 export interface BossPhase {
@@ -39,12 +41,14 @@ export interface Character {
   tier: Tier; fightable: boolean; hp: number; atk: number; def: number;
   ai: AIParams; moves: string[]; special?: string; phases?: BossPhase[];
   look: Appearance; relationStart?: number;
+  lvl?: number;           // design level: HP scales up only when the player out-levels this
 }
 
 export interface Gang {
   id: string; name: LText; jp: string; color: string; accent: string; territory: string[];
   leader: string; members: number; style: LText; history: LText; relations: Record<string, number>;
   hostileToPlayer: boolean; uniform: Partial<Appearance>; gruntNames: string[];
+  variants?: Record<string, number>; // enemy variant weights for this gang (see data/enemies.ts)
 }
 
 export interface ZoneDef {

@@ -40,11 +40,11 @@ export class Combat {
         const m = f.move!; f.moveT += dt * f.mods.atkSpeed;
         const ph = f.movePhase();
         const lockT = this.w.lockTarget(f, 4.5);
-        if (m.id === 'sp_kamaitachi' && lockT && ph !== 'recovery') { const want = Math.atan2(lockT.x - f.x, lockT.z - f.z); f.yaw += clamp(angleDiff(f.yaw, want), -10 * dt, 10 * dt); fx = Math.sin(f.yaw); fz = Math.cos(f.yaw); }
+        if (m.homing && lockT && ph !== 'recovery') { const want = Math.atan2(lockT.x - f.x, lockT.z - f.z); f.yaw += clamp(angleDiff(f.yaw, want), -10 * dt, 10 * dt); fx = Math.sin(f.yaw); fz = Math.cos(f.yaw); }
         else if (ph === 'startup' && lockT && m.kind !== 'stance') { const want = Math.atan2(lockT.x - f.x, lockT.z - f.z); f.yaw += clamp(angleDiff(f.yaw, want), -9 * dt, 9 * dt); fx = Math.sin(f.yaw); fz = Math.cos(f.yaw); }
         if ((ph === 'startup' || ph === 'active') && m.lunge > 0 && m.kind !== 'stance') {
           let l = m.lunge * (ph === 'startup' ? (m.startup > 0.4 ? 0.1 : 0.6) : 1) * (m.id === 'flykick' ? f.mods.fly : 1);
-          if (lockT && m.id !== 'sp_kamaitachi' && m.id !== 'sp_nitro' && m.id !== 'sp_hammer' && m.id !== 'flykick') { const d = f.distTo(lockT); if (d < m.range * 0.75 + lockT.radius) l = 0; }
+          if (lockT && !m.rush) { const d = f.distTo(lockT); if (d < m.range * 0.75 + lockT.radius) l = 0; }
           f.vx = fx * l; f.vz = fz * l;
         } else { const k = Math.exp(-12 * dt); f.vx *= k; f.vz *= k; }
         if (m.id === 'flykick') f.y = ph === 'recovery' ? Math.max(0, f.y - dt * 6) : Math.sin(Math.min(1, f.moveT / (m.startup + m.active)) * Math.PI) * 0.9;
@@ -126,7 +126,7 @@ export class Combat {
       if (idx !== f.hitIdx) {
         f.hitIdx = idx; f.hitSet.clear();
         if (idx === 0 && f.isPlayer && m.id === 'hkick' && f.mods.earthshaker) this.shockwave(f, 4.2, 8);
-        if (idx === 0 && m.id === 'sp_crane') this.w.emit('slam', { f });
+        if (idx === 0 && m.slam) this.w.emit('slam', { f });
         if (idx === 0 && m.impact && f.isPlayer) this.w.emit('special', { f, m });
       }
       if (m.kind === 'throw') {
@@ -167,6 +167,8 @@ export class Combat {
     if (m.family === 'punch') d *= att.mods.punch; else if (m.family === 'kick') d *= att.mods.kick; else if (m.family === 'counter') d *= att.mods.counter;
     if (m.id === 'finisher') d *= att.mods.finisher; if (m.kind === 'throw') d *= att.mods.throwDmg; if (m.id === 'flykick' && att.mods.meteor) d *= 1.5;
     if (att.mods.lastStand && att.hp < att.maxHp * 0.3) d *= 1.3;
+    if (att.buffed) d *= 1.2; // a gang leader nearby fires them up
+    if (att.mods.packBreaker && att.isPlayer && this.w.engagedCount(att) >= 3) d *= 1.2;
     d /= Math.max(0.3, (tgt.def / 10) * tgt.mods.def);
     return Math.max(1, d * (0.92 + Math.random() * 0.16));
   }
@@ -179,7 +181,7 @@ export class Combat {
         tgt.evaded = true;
         const perfect = tgt.stateT <= tgt.mods.perfectWin;
         tgt.counterWin = perfect ? 0.95 : tgt.mods.counterWin; tgt.counterKind = 'dodge';
-        w.emit(perfect ? 'perfectDodge' : 'evade', { f: tgt, att });
+        w.emit(perfect ? 'perfectDodge' : 'evade', { f: tgt, att }); if (perfect && tgt.mods.afterimage) tgt.meter = Math.min(100, tgt.meter + 25);
         if (perfect && tgt.isPlayer) w.startSlowmo(tgt.mods.slowmo);
       }
       return;

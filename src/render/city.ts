@@ -24,11 +24,14 @@ export const lampHeadMat = new THREE.MeshBasicMaterial({ color: 0xfff2c8 });
 export const lanternMat = new THREE.MeshBasicMaterial({ color: 0xff4a3a });
 export const vendingMat = new THREE.MeshBasicMaterial({ color: 0xe8f4ff });
 const signMats: THREE.MeshBasicMaterial[] = [];
+/** Per-building render handles for the camera cutaway (buildings between camera and fight sink to a low stub). */
+interface BInfo { b: Building; im: THREE.InstancedMesh; om: THREE.InstancedMesh; i: number; cur: number; att: THREE.InstancedMesh | null; a0: number; a1: number; signs: THREE.Object3D[]; roofTop: boolean; camIn?: boolean }
+const CUT_H = 1.3;
 
 export class CityView {
   group = new THREE.Group(); chunks: { g: THREE.Group; built: boolean; cx: number; cz: number; items: Inst[]; buildings: Building[]; signs: Building[] }[] = [];
   lampPools!: THREE.InstancedMesh; water!: THREE.Mesh; waterTex!: THREE.Texture; skyMat!: THREE.ShaderMaterial; stars!: THREE.Points; sky!: THREE.Mesh;
-  glowSprites: THREE.Sprite[] = []; bMat = buildingMaterial();
+  glowSprites: THREE.Sprite[] = []; bMat = buildingMaterial(); binfos: BInfo[] = []; cutCount = 0; private attMats = new Map<THREE.InstancedMesh, THREE.Matrix4[]>();
   constructor(private city: CityData, private quality: number) {
     for (let i = 0; i < NCH * NCH; i++) this.chunks.push({ g: new THREE.Group(), built: false, cx: (i % NCH) * CH - MAP_HALF - 2 + CH / 2, cz: Math.floor(i / NCH) * CH - MAP_HALF - 2 + CH / 2, items: [], buildings: [], signs: [] });
     for (const c of this.chunks) { c.g.visible = false; this.group.add(c.g); }
@@ -76,8 +79,9 @@ export class CityView {
     if (c.buildings.length) {
       const bs = c.buildings; const n = bs.length; const im = new THREE.InstancedMesh(unitBox, this.bMat, n); const om = new THREE.InstancedMesh(unitBox, outlineMat, n);
       const m = new THREE.Matrix4(), q = new THREE.Quaternion(), col = new THREE.Color(); const t = 0.09;
-      const roofs: Inst[] = [];
+      const roofs: Inst[] = []; const infos: BInfo[] = [];
       bs.forEach((b, i) => {
+        const a0 = roofs.length;
         const w = b.x1 - b.x0, d = b.z1 - b.z0, cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2;
         m.compose(new THREE.Vector3(cx, 0, cz), q, new THREE.Vector3(w, b.h, d)); im.setMatrixAt(i, m); im.setColorAt(i, col.set(b.color));
         m.compose(new THREE.Vector3(cx, -t, cz), q, new THREE.Vector3(w + t * 2, b.h + t * 2, d + t * 2)); om.setMatrixAt(i, m);
@@ -88,10 +92,19 @@ export class CityView {
           const side = b.signSide || 's'; const aw = side === 'e' || side === 'w' ? [0.9, 0.12, d * 0.9] : [w * 0.9, 0.12, 0.9]; const ax = side === 'e' ? b.x1 + 0.45 : side === 'w' ? b.x0 - 0.45 : cx; const az = side === 's' ? b.z1 + 0.45 : side === 'n' ? b.z0 - 0.45 : cz;
           roofs.push(this.I('box', ['#c83a3a', '#3a6ac8', '#e0a030', '#3a9a5a'][i % 4], ax, 3.1, az, aw[0], 0.38, aw[2], 0, false)); roofs.push(this.I('box', '#f4f0e6', ax, 2.86, az, aw[0] * 1.01, 0.1, aw[2] * 1.01, 0, false));
         }
+        infos.push({ b, im, om, i, cur: 1, att: null, a0, a1: roofs.length, signs: [], roofTop: isRoofTop });
       });
       im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; im.computeBoundingSphere(); om.computeBoundingSphere();
-      c.g.add(im, om); c.items.push(...roofs);
-      for (const b of c.signs) this.makeSign(c.g, b);
+      c.g.add(im, om);
+      // building attachments (roof caps, awnings) live in their own instanced mesh so they can hide with the cutaway
+      if (roofs.length) {
+        const att = new THREE.InstancedMesh(unitBox, matFor('toon'), roofs.length); const mats: THREE.Matrix4[] = [];
+        roofs.forEach((it, k) => { const mm = new THREE.Matrix4().compose(it.p, q.identity(), it.s); att.setMatrixAt(k, mm); att.setColorAt(k, col.set(it.color)); mats.push(mm); });
+        att.castShadow = this.quality > 1; att.receiveShadow = true; att.computeBoundingSphere(); c.g.add(att); this.attMats.set(att, mats);
+        for (const inf of infos) inf.att = att;
+      }
+      for (const b of c.signs) { const objs = this.makeSign(c.g, b); const inf = infos.find(x => x.b === b); if (inf) inf.signs.push(...objs); }
+      this.binfos.push(...infos);
     }
     // grouped instanced props
     const groups = new Map<string, Inst[]>(); for (const it of c.items) { const k = it.geo + '|' + it.mat + '|' + (it.outline ? 1 : 0); if (!groups.has(k)) groups.set(k, []); groups.get(k)!.push(it); }
@@ -107,7 +120,8 @@ export class CityView {
       im.castShadow = this.quality > 1 && matK === 'toon'; im.receiveShadow = true; im.computeBoundingSphere(); c.g.add(im); if (om) { om.computeBoundingSphere(); c.g.add(om); }
     }
   }
-  private makeSign(g: THREE.Group, b: Building) {
+  private makeSign(g: THREE.Group, b: Building): THREE.Object3D[] {
+    const made: THREE.Object3D[] = [];
     const vertical = b.kind === 'shop' && b.h < 12 && b.signSide !== 'n' && b.signSide !== 's';
     const txt = b.sign!; const tex = canvasTexture(vertical ? 96 : 512, vertical ? 384 : 128, (c) => {
       const W = c.canvas.width, H = c.canvas.height; c.fillStyle = '#141418'; c.fillRect(0, 0, W, H); c.strokeStyle = b.signColor!; c.lineWidth = 8; c.strokeRect(6, 6, W - 12, H - 12);
@@ -123,10 +137,39 @@ export class CityView {
     else if (side === 'w') { mesh.position.set(b.x0 - (vertical ? 0.6 : 0.06), y, cz); mesh.rotation.y = -Math.PI / 2; }
     else if (side === 'n') { mesh.position.set(cx, y, b.z0 - 0.06); mesh.rotation.y = Math.PI; }
     else mesh.position.set(cx, y, b.z1 + 0.06);
-    if (vertical) { mesh.rotation.y += Math.PI / 2; const back = mesh.clone(); back.rotation.y += Math.PI; g.add(back); }
-    g.add(mesh);
+    if (vertical) { mesh.rotation.y += Math.PI / 2; const back = mesh.clone(); back.rotation.y += Math.PI; g.add(back); made.push(back); }
+    g.add(mesh); made.push(mesh);
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: b.signColor, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 }));
-    glow.position.copy(mesh.position); glow.scale.set(w * 2.2, h * 1.6, 1); g.add(glow); this.glowSprites.push(glow);
+    glow.position.copy(mesh.position); glow.scale.set(w * 2.2, h * 1.6, 1); g.add(glow); this.glowSprites.push(glow); made.push(glow);
+    return made;
+  }
+  /**
+   * Camera cutaway: any building whose volume intersects a sight line camera->(player / engaged enemies),
+   * or that contains the camera, smoothly sinks to a low stub; its roof caps, awnings and signs hide.
+   * The rooftop-playable school building is never cut (the camera collides with it instead).
+   */
+  updateCutaway(cam: THREE.Vector3, pts: THREE.Vector3[], dt: number) {
+    let minX = cam.x, maxX = cam.x, minZ = cam.z, maxZ = cam.z; for (const p of pts) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z); }
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), t = 0.09, zero = new THREE.Matrix4().makeScale(0, 0, 0); let n = 0; const dirty = new Set<THREE.InstancedMesh>();
+    for (const inf of this.binfos) {
+      const b = inf.b; let want = 1; inf.camIn = false;
+      if (!inf.roofTop && b.x1 > minX - 1 && b.x0 < maxX + 1 && b.z1 > minZ - 1 && b.z0 < maxZ + 1) {
+        const inside = cam.x > b.x0 - 0.6 && cam.x < b.x1 + 0.6 && cam.z > b.z0 - 0.6 && cam.z < b.z1 + 0.6 && cam.y < b.h + 1.5;
+        inf.camIn = inside;
+        if (inside || pts.some(p => segBox(cam, p, b.x0 - 0.35, 0, b.z0 - 0.35, b.x1 + 0.35, b.h + 0.4, b.z1 + 0.35))) want = Math.min(1, CUT_H / b.h);
+      }
+      if (want === 1 && inf.cur === 1) continue;
+      const nc = Math.abs(inf.cur - want) < 0.01 || (inf.camIn && want < inf.cur) ? want : inf.cur + (want - inf.cur) * (1 - Math.exp(-(want < inf.cur ? 14 : 5) * dt));
+      const wasFull = inf.cur > 0.97; inf.cur = nc; if (nc < 1) n++;
+      const w = b.x1 - b.x0, d = b.z1 - b.z0, cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2, h = b.h * nc;
+      m.compose(new THREE.Vector3(cx, 0, cz), q, new THREE.Vector3(w, h, d)); inf.im.setMatrixAt(inf.i, m); dirty.add(inf.im);
+      m.compose(new THREE.Vector3(cx, -t, cz), q, new THREE.Vector3(w + t * 2, h + t * 2, d + t * 2)); inf.om.setMatrixAt(inf.i, m); dirty.add(inf.om);
+      const full = nc > 0.97;
+      if (full !== wasFull && inf.att) { const mats = this.attMats.get(inf.att)!; for (let k = inf.a0; k < inf.a1; k++) inf.att.setMatrixAt(k, full ? mats[k] : zero); dirty.add(inf.att); }
+      for (const o of inf.signs) o.visible = full;
+    }
+    for (const im of dirty) { im.instanceMatrix.needsUpdate = true; }
+    this.cutCount = n;
   }
   private buildGround() {
     const kinds: Record<string, string> = { road: '#3b3d44', tile: '#b7a68a', grass: '#6aa84f', dirt: '#b99c6c', concrete: '#8f8e88', parking: '#46484e', deck: '#8b8781', roof: '#8e948f', rail: '#5a4c3e' };
@@ -213,3 +256,13 @@ export class CityView {
 }
 let _glow: THREE.Texture | null = null;
 export function glowTex() { if (_glow) return _glow; _glow = canvasTexture(64, 64, (c) => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.4, 'rgba(255,255,255,0.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }); return _glow; }
+/** Segment (a->b) vs axis-aligned box intersection (slab test). */
+function segBox(a: THREE.Vector3, b: THREE.Vector3, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) {
+  let tmin = 0, tmax = 1; const o = [a.x, a.y, a.z], d = [b.x - a.x, b.y - a.y, b.z - a.z], lo = [x0, y0, z0], hi = [x1, y1, z1];
+  for (let k = 0; k < 3; k++) {
+    if (Math.abs(d[k]) < 1e-9) { if (o[k] < lo[k] || o[k] > hi[k]) return false; continue; }
+    let t1 = (lo[k] - o[k]) / d[k], t2 = (hi[k] - o[k]) / d[k]; if (t1 > t2) { const tt = t1; t1 = t2; t2 = tt; }
+    tmin = Math.max(tmin, t1); tmax = Math.min(tmax, t2); if (tmin > tmax) return false;
+  }
+  return true;
+}

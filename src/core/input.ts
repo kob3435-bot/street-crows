@@ -3,10 +3,11 @@
  * setVirtual* methods), and an injectable "bot" source used by automated tests.
  * Output is an abstract action state consumed by the simulation each tick.
  */
-export type Action = 'punch' | 'heavy' | 'kick' | 'hkick' | 'dodge' | 'grab' | 'special' | 'interact' | 'menu' | 'pause' | 'item1' | 'item2' | 'item3' | 'map' | 'help';
+export type Action = 'punch' | 'heavy' | 'kick' | 'hkick' | 'dodge' | 'grab' | 'special' | 'interact' | 'menu' | 'pause' | 'item1' | 'item2' | 'item3' | 'map' | 'help' | 'auto';
 export class Input {
   moveX = 0; moveY = 0; // moveY: +1 forward
   lookX = 0; lookY = 0; // accumulated deltas (radians-ish)
+  zoomDelta = 0; // accumulated camera zoom (metres, + = farther)
   sprint = false; block = false;
   private keys = new Set<string>();
   private pressed = new Set<Action>();
@@ -43,6 +44,11 @@ export class Input {
       this.dragging = true; this.lastMX = e.clientX; this.lastMY = e.clientY;
     });
     window.addEventListener('mouseup', () => (this.dragging = false));
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault(); if (!this.enabled) return; this.lastDevice = 'kbm';
+      const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * 400 : e.deltaY;
+      this.zoomDelta += Math.max(-3, Math.min(3, px * 0.012));
+    }, { passive: false });
     document.addEventListener('pointerlockchange', () => { this.pointerLocked = document.pointerLockElement === canvas; });
     window.addEventListener('mousemove', (e) => {
       if (!this.enabled) return;
@@ -52,8 +58,12 @@ export class Input {
   }
   private look(dx: number, dy: number, k: number) { this.lookX += dx * k * this.sensitivity; this.lookY += dy * k * this.sensitivity * (this.invertY ? -1 : 1); }
   addTouchLook(dx: number, dy: number) { this.lastDevice = 'touch'; this.look(dx, dy, 0.006); }
+  /** Pinch / external zoom (metres, + = farther). */
+  addZoom(d: number) { if (this.enabled) this.zoomDelta += d; }
+  consumeZoom() { const z = this.zoomDelta; this.zoomDelta = 0; return z; }
   private keyAction(code: string) {
-    const map: Record<string, Action> = { KeyF: 'kick', KeyC: 'hkick', Space: 'dodge', KeyG: 'grab', KeyR: 'special', KeyE: 'interact', Tab: 'menu', Escape: 'pause', Digit1: 'item1', Digit2: 'item2', Digit3: 'item3', KeyM: 'map', KeyH: 'help', KeyJ: 'punch', KeyK: 'heavy' };
+    const map: Record<string, Action> = { KeyF: 'kick', KeyC: 'hkick', Space: 'dodge', KeyG: 'grab', KeyR: 'special', KeyE: 'interact', Tab: 'menu', Escape: 'pause', Digit1: 'item1', Digit2: 'item2', Digit3: 'item3', KeyM: 'map', KeyH: 'help', KeyJ: 'punch', KeyK: 'heavy', KeyT: 'auto' };
+    if (code === 'Equal' || code === 'NumpadAdd') this.zoomDelta -= 1.5; if (code === 'Minus' || code === 'NumpadSubtract') this.zoomDelta += 1.5;
     const a = map[code]; if (a) this.press(a);
   }
   press(a: Action) { this.pressed.add(a); }
@@ -78,8 +88,9 @@ export class Input {
       if (rx || ry) { this.lookX += rx * 0.05 * this.sensitivity; this.lookY += ry * 0.04 * this.sensitivity * (this.invertY ? -1 : 1); }
       const b = gp.buttons.map(x => x.pressed);
       const edge = (i: number, a: Action) => { if (b[i] && !this.padPrev[i]) { this.press(a); this.lastDevice = 'pad'; } };
-      edge(2, 'punch'); edge(3, 'heavy'); edge(1, 'kick'); edge(7, 'hkick'); edge(0, 'dodge'); edge(5, 'grab'); edge(12, 'special'); edge(11, 'special'); edge(15, 'interact'); edge(8, 'menu'); edge(9, 'pause'); edge(14, 'item1');
-      if (b[4]) block = true; if (b[6] || b[10]) sprint = true;
+      edge(2, 'punch'); edge(3, 'heavy'); edge(1, 'kick'); edge(7, 'hkick'); edge(0, 'dodge'); edge(5, 'grab'); edge(11, 'special'); edge(10, 'auto'); edge(15, 'interact'); edge(8, 'menu'); edge(9, 'pause'); edge(14, 'item1');
+      if (b[4]) block = true; if (b[6]) sprint = true;
+      if (b[12]) this.zoomDelta -= 0.22; if (b[13]) this.zoomDelta += 0.22; // D-pad up/down = zoom
       this.padPrev = b;
     }
     if (this.bot) { mx = this.bot.moveX; my = this.bot.moveY; sprint = this.bot.sprint; block = this.bot.block; }

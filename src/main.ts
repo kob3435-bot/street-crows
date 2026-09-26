@@ -46,15 +46,16 @@ const touch = new TouchControls(ui, input, world);
 const touchOn = coarse || qs.get('touch') === '1';
 touch.setActive(false);
 if (hud) (hud as any).touchMode = touchOn;
-const applySettings = () => { input.sensitivity = settings.sens; input.invertY = settings.invertY; audio.setVolume(settings.volume, settings.music); if (hud) (hud as any).showFps = settings.fps; };
+const applySettings = () => { world.camZoom = Math.max(4.5, Math.min(18, Number(settings.zoom) || 11)); input.sensitivity = settings.sens; input.invertY = settings.invertY; audio.setVolume(settings.volume, settings.music); if (hud) (hud as any).showFps = settings.fps; };
 applySettings(); menu.onSettings = applySettings;
+let zoomSaveT: any = 0; bus.on('zoom', (e) => { settings.zoom = Math.round(e.d * 10) / 10; clearTimeout(zoomSaveT); zoomSaveT = setTimeout(() => saveSettings(settings), 500); });
 menu.onQuality = async () => { if (started) await saves.save('auto', world.serialize()); const u = new URL(location.href); u.searchParams.delete('quality'); if (started) u.searchParams.set('continue', '1'); location.href = u.toString(); };
 
 let started = false;
 async function start(mode: string) {
   if (mode === 'continue') { const d = await saves.load('auto') || await saves.load('1') || await saves.load('2') || await saves.load('3'); let ok = false; if (d) { try { world.load(d); ok = true; } catch (e) { console.warn('load failed', e); } } if (!ok) bus.emit('toast', { text: tx({ th: 'ไฟล์เซฟเสีย เริ่มเกมใหม่', en: 'Save was corrupt, starting new game' }) }); }
-  started = true; world.menuOpen = false; touch.setActive(touchOn); audio.init();
-  if (mode === 'new') { world.setClock(14.5); world.camYaw = Math.atan2(world.player.x - 60, world.player.z - 4); world.camPitch = 0.3; bus.emit('save', { reason: 'new' }); }
+  started = true; world.menuOpen = false; touch.setActive(touchOn); audio.init(); world.camPitch = 0.5;
+  if (mode === 'new') { world.setClock(14.5); world.camYaw = Math.atan2(world.player.x - 60, world.player.z - 4); world.camPitch = 0.5; bus.emit('save', { reason: 'new' }); }
   document.body.classList.add('ingame');
 }
 menu.onStart = (m) => start(m);
@@ -85,7 +86,7 @@ let botOn = false; let botT = 0; let botSeq = 0; let botBlock = 0; let botSmart 
 function botSpend() {
   const g = world.progress; let changed = false;
   while (g.statPoints > 0) { const k = (['power', 'defense', 'power', 'speed', 'technique', 'counter'] as const)[g.statPoints % 6]; if (!g.raise(k as any)) break; changed = true; }
-  for (const id of ['iron_fist', 'thick_skin', 'combo_flow', 'quick_feet', 'danger_sense', 'iron_guard', 'guard_crusher', 'counter_art', 'second_wind', 'grab_master', 'rebound', 'crowd_reader', 'haymaker', 'last_stand', 'earthshaker', 'shadow_step', 'meter_boost', 'intimidate', 'meteor_kick', 'aura']) if (g.canLearn(id).ok) { g.learn(id); changed = true; }
+  for (const id of ['iron_fist', 'thick_skin', 'combo_flow', 'quick_feet', 'danger_sense', 'iron_guard', 'guard_crusher', 'counter_art', 'second_wind', 'grab_master', 'rebound', 'crowd_reader', 'haymaker', 'last_stand', 'earthshaker', 'shadow_step', 'meter_boost', 'intimidate', 'meteor_kick', 'aura', 'demon_fist', 'flow_state', 'unbreakable', 'pack_breaker', 'afterimage']) if (g.canLearn(id).ok) { g.learn(id); changed = true; }
   if (changed) world.refreshPlayerStats();
 }
 function botTick(dt: number) {
@@ -93,7 +94,8 @@ function botTick(dt: number) {
   if (world.dialogue) { world.advanceDialogue(0); return; }
   if (botSmart) botSpend();
   const foes = hostileAlive().filter(f => f.aggro && Math.hypot(f.x - p.x, f.z - p.z) < 40).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z));
-  const t = foes.find(f => f.phases) && Math.hypot(foes.find(f => f.phases)!.x - p.x, foes.find(f => f.phases)!.z - p.z) < 5 ? foes.find(f => f.phases)! : foes[0];
+  const encF = hostileAlive().filter(f => f.encounter && Math.hypot(f.x - p.x, f.z - p.z) < 300).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z));
+  const t = encF.length && !(foes[0] && Math.hypot(foes[0].x - p.x, foes[0].z - p.z) < 2.5) ? encF[0] : foes.find(f => f.phases) && Math.hypot(foes.find(f => f.phases)!.x - p.x, foes.find(f => f.phases)!.z - p.z) < 5 ? foes.find(f => f.phases)! : foes[0];
   if (botBlock > 0) botBlock -= dt;
   input.bot = { moveX: 0, moveY: 0, sprint: false, block: botBlock > 0 };
   if (!t) return;
@@ -132,7 +134,10 @@ const debug = {
   skipDialogue() { let n = 0; while (world.dialogue && n++ < 200) world.advanceDialogue(0); },
   startQuest(id: string) { world.quests.start(id); },
   bot(on = true, smart = true) { botOn = on; botSmart = smart; if (!on) input.bot = null; },
-  state() { const p = world.player, g = world.progress; return { x: p.x, z: p.z, layer: p.layer, hp: p.hp, maxHp: p.maxHp, level: g.level, exp: g.exp, sp: g.skillPoints, skills: [...g.skills], money: g.money, rep: g.rep, active: world.quests.active.map(a => a.id + ':' + a.step), done: [...world.quests.done], bosses: [...world.bosses], clock: world.clock, fighters: world.fighters.filter(f => !f.isPlayer && f.alive).length, dialogue: !!world.dialogue, menuOpen: world.menuOpen, state: p.state }; },
+  state() { const p = world.player, g = world.progress; return { x: p.x, z: p.z, layer: p.layer, hp: p.hp, maxHp: p.maxHp, level: g.level, exp: g.exp, sp: g.skillPoints, skills: [...g.skills], money: g.money, rep: g.rep, active: world.quests.active.map(a => a.id + ':' + a.step), done: [...world.quests.done], bosses: [...world.bosses], clock: world.clock, fighters: world.fighters.filter(f => !f.isPlayer && f.alive).length, dialogue: !!world.dialogue, menuOpen: world.menuOpen, state: p.state, auto: world.auto, autoStatus: world.autoStatus, zoom: world.camZoom }; },
+  auto(on = true) { world.setAuto(on); },
+  zoom(d: number) { input.addZoom(d - world.camZoom); },
+  cam() { const r = renderer; if (!r) return null; const c = r.camera.position, p = world.player; return { dist: r.camDist, want: r.camWant, zoom: world.camZoom, pitch: world.camPitch, inside: r.camInsideSolid(), cut: r.city.cutCount, x: c.x, y: c.y, z: c.z, h: c.y - p.layer * 15, horiz: Math.hypot(c.x - p.x, c.z - p.z), ring: r.lockRing.visible }; },
   async save(slot = 'auto') { await saves.save(slot, world.serialize()); },
   start,
   step(sec: number) { const n = Math.round(sec * 60); for (let i = 0; i < n; i++) { botTick(1 / 60); input.poll(); world.step(1 / 60, input); } },

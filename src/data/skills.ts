@@ -27,5 +27,11 @@ export const SKILLS: SkillDef[] = [
   { id: 'crowd_reader', branch: 'instinct', tier: 2, cost: 1, requires: ['danger_sense'], minLevel: 3, name: T('อ่านฝูงชน', 'Crowd Reader'), desc: T('เห็นสัญญาณเตือน "!" ก่อนศัตรูโจมตี', 'See a "!" warning before enemies attack') },
   { id: 'intimidate', branch: 'instinct', tier: 3, cost: 2, requires: ['crowd_reader'], minLevel: 5, name: T('ข่มขวัญ', 'Intimidation'), desc: T('ลูกกระจ๊อกอาจหนีเมื่อชื่อเสียงสูง ศัตรูลังเลมากขึ้น', 'Grunts may flee at high reputation; enemies hesitate more') },
   { id: 'aura', branch: 'instinct', tier: 4, cost: 2, requires: ['intimidate'], minLevel: 7, name: T('ออร่าผู้นำ(ที่ไม่อยากเป็น)', 'Reluctant Aura'), desc: T('EXP และชื่อเสียง +30%', 'EXP and Reputation +30%') },
+  // tier 5 (late story): one capstone per branch
+  { id: 'demon_fist', branch: 'power', tier: 5, cost: 3, requires: ['haymaker'], minLevel: 13, name: T('หมัดอสูร', 'Demon Fist'), desc: T('ดาเมจทุกท่า +12%', 'All damage +12%') },
+  { id: 'afterimage', branch: 'speed', tier: 5, cost: 3, requires: ['meteor_kick'], minLevel: 12, name: T('ภาพติดตา', 'Afterimage'), desc: T('หลบเพอร์เฟกต์ได้เกจพิเศษ +25', 'Perfect dodges grant +25 special meter') },
+  { id: 'flow_state', branch: 'technique', tier: 5, cost: 3, requires: ['meter_boost'], minLevel: 12, name: T('สภาวะไหลลื่น', 'Flow State'), desc: T('ออกท่าเร็วขึ้น 8% ช่วงต่อคอมโบกว้างขึ้นอีก', 'Attacks 8% faster, even wider combo windows') },
+  { id: 'unbreakable', branch: 'toughness', tier: 5, cost: 3, requires: ['last_stand'], minLevel: 14, name: T('ไม่มีวันล้ม', 'Unbreakable'), desc: T('HP สูงสุด +40 และรับดาเมจน้อยลง 15%', 'Max HP +40 and take 15% less damage') },
+  { id: 'pack_breaker', branch: 'instinct', tier: 5, cost: 3, requires: ['aura'], minLevel: 13, name: T('ทลายฝูง', 'Pack Breaker'), desc: T('เมื่อถูกรุมตั้งแต่ 3 คน ดาเมจ +20%', '+20% damage while 3+ enemies are on you') },
 ];
 export const SKILL_BY_ID: Record<string, SkillDef> = Object.fromEntries(SKILLS.map(s => [s.id, s]));

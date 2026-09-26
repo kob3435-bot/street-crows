@@ -9,7 +9,7 @@ import { Overlay } from './overlay';
 import { shared } from './toon';
 import { bus } from '../core/events';
 import { CHAR_BY_ID } from '../data/characters';
-import { ROOF } from '../data/city';
+import { ROOF, INTERACTABLES } from '../data/city';
 import { damp, clamp } from '../core/rng';
 import type { Appearance } from '../data/types';
 
@@ -36,7 +36,7 @@ export class GameRenderer {
   renderer: THREE.WebGLRenderer; scene = new THREE.Scene(); camera: THREE.PerspectiveCamera; city: CityView; crowd: CrowdView; fx = new FX(); overlay: Overlay;
   hemi = new THREE.HemisphereLight(); sun = new THREE.DirectionalLight(); points: THREE.PointLight[] = []; fill = new THREE.PointLight(0xd0dcff, 0, 20, 1.1);
   rigs = new Map<number, CharacterRig>(); actors = new Map<string, CharacterRig>(); ghosts = new Map<string, CharacterRig>();
-  camDist = 5.5; shake = 0; camTarget = new THREE.Vector3(); viewDist = 180; frame = 0; fps = 60; private fpsAcc = 0; private fpsN = 0;
+  camDist = 11; camWant = 11; lockRing!: THREE.Mesh; private focus = new THREE.Vector3(); shake = 0; camTarget = new THREE.Vector3(); viewDist = 180; frame = 0; fps = 60; private fpsAcc = 0; private fpsN = 0;
   constructor(public canvas: HTMLCanvasElement, public world: World, public quality: Quality, uiRoot: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: quality > 0, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(quality === 0 ? Math.min(1, devicePixelRatio) * 0.8 : quality === 1 ? Math.min(devicePixelRatio, 1.25) : Math.min(devicePixelRatio, 2));
@@ -58,11 +58,15 @@ export class GameRenderer {
   }
   resize() { const w = window.innerWidth, h = window.innerHeight; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.fov = w < h ? 72 : 58; this.camera.updateProjectionMatrix(); }
   private buildActors() {
-    for (const it of this.world.interactables()) {
+    for (const it of INTERACTABLES) {
       if (it.kind !== 'npc' || !it.npc) continue;
       const look: Appearance = CHAR_BY_ID[it.npc]?.look || { hair: 'topknot', hairColor: '#d8d8d8', jacket: '#8a6a9a', shirt: '#e0d0c0', pants: '#5a4a5a', shoes: '#333', skin: '#e8c8a8', accessory: 'none', build: 0.85, height: 0.86 };
       const rig = new CharacterRig(look); this.actors.set(it.id, rig); this.scene.add(rig.root);
     }
+    const rg = new THREE.RingGeometry(0.62, 0.8, 28, 1).rotateX(-Math.PI / 2);
+    this.lockRing = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: 0xff4a3a, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide }));
+    const tick = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 4).rotateX(Math.PI), (this.lockRing.material as THREE.Material)); tick.position.y = 2.55; tick.name = 'lockTick'; this.lockRing.add(tick);
+    this.lockRing.renderOrder = 5; this.lockRing.visible = false; this.scene.add(this.lockRing);
     const cat = new THREE.Group(); const body = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.2, 0.45), new THREE.MeshToonMaterial({ color: 0xf0e0c0 })); body.position.y = 0.2; cat.add(body);
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), new THREE.MeshToonMaterial({ color: 0xe08a40 })); head.position.set(0, 0.35, 0.25); cat.add(head); cat.position.set(-170, 0, 88); cat.name = 'cat'; this.scene.add(cat);
   }
@@ -106,7 +110,8 @@ export class GameRenderer {
       rig.update(f, dt, alpha, f.isPlayer ? combatNear : false); rig.setOutlines(d < (this.quality === 0 ? 25 : 45));
     }
     for (const [id, rig] of this.rigs) if (!seen.has(id)) { rig.dispose(); this.rigs.delete(id); }
-    // static NPC actors
+    // static NPC actors (hidden while unavailable, e.g. before their chapter or while that character is fighting)
+    const present = new Set(w.interactables().map(i => i.id)); for (const [id, rig] of this.actors) if (!present.has(id)) rig.root.visible = false;
     for (const it of w.interactables()) {
       const rig = this.actors.get(it.id); if (!rig) continue; const layer = it.layer || 0;
       rig.root.position.set(it.pos[0], layer * ROOF.y, it.pos[1]);
@@ -126,20 +131,55 @@ export class GameRenderer {
     }
     for (const [id, g] of this.ghosts) if (!w.remotes.has(id)) { g.dispose(); this.ghosts.delete(id); }
   }
+  /**
+   * Wide third-person overview camera. Distance = world.camZoom (wheel / pinch / D-pad, 4.5-18 m, default 11)
+   * widened a little in portrait, with several engaged enemies, or for bosses. Buildings between camera and the
+   * fight are cut away (CityView.updateCutaway); other solids pull the camera in with fast-in / slow-out damping.
+   */
   private updateCamera(dt: number, alpha: number) {
     const w = this.world, p = w.player; const x = p.px + (p.x - p.px) * alpha, z = p.pz + (p.z - p.pz) * alpha; const baseY = p.layer * ROOF.y;
-    const engaged = w.fighters.filter(f => f.aggro && f.alive && !f.isPlayer && f.distTo(p) < 12).length;
-    const boss = w.fighters.some(f => f.phases && f.alive && f.distTo(p) < 20);
-    const want = 5.4 + Math.min(2, engaged * 0.45) + (boss ? 0.9 : 0) + (w.dialogue ? -1.2 : 0);
-    this.camTarget.set(damp(this.camTarget.x || x, x, 14, dt), damp(this.camTarget.y || baseY + 1.55, baseY + 1.55 + Math.min(p.y, 1) * 0.3, 10, dt), damp(this.camTarget.z || z, z, 14, dt));
-    if (Math.abs(this.camTarget.x - x) > 8 || Math.abs(this.camTarget.z - z) > 8) this.camTarget.set(x, baseY + 1.55, z);
+    const eng = w.fighters.filter(f => f.aggro && f.alive && !f.isPlayer && f.layer === p.layer && f.distTo(p) < 14);
+    const boss = eng.some(f => !!f.phases);
+    const portrait = window.innerHeight > window.innerWidth;
+    let want = w.camZoom * (portrait ? 1.22 : 1) * (1 + Math.min(0.22, 0.055 * Math.max(0, eng.length - 1)) + (boss ? 0.08 : 0));
+    if (w.dialogue) want *= 0.62;
+    this.camWant = damp(this.camWant, want, 3, dt);
+    // focus: player, biased toward the enemy group (max 30 %, <= 3 m) so the whole fight stays in frame
+    let fx = x, fz = z;
+    if (eng.length) { let cx = 0, cz = 0; for (const f of eng) { cx += f.x; cz += f.z; } cx /= eng.length; cz /= eng.length; let ox = (cx - x) * 0.3, oz = (cz - z) * 0.3; const ol = Math.hypot(ox, oz); if (ol > 3) { ox *= 3 / ol; oz *= 3 / ol; } fx += ox; fz += oz; }
+    const fy = baseY + 1.2 + Math.min(p.y, 1) * 0.3;
+    if (!this.focus.lengthSq() || Math.abs(this.focus.x - fx) > 10 || Math.abs(this.focus.z - fz) > 10) this.focus.set(fx, fy, fz);
+    else this.focus.set(damp(this.focus.x, fx, 9, dt), damp(this.focus.y, fy, 8, dt), damp(this.focus.z, fz, 9, dt));
+    this.camTarget.copy(this.focus);
     const yaw = w.camYaw, pitch = w.camPitch; const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
-    let dist = want; const t = this.camTarget;
-    const hit = w.col.ray(t.x, t.y, t.z, dir.x, dir.y, dir.z, want + 0.3) - 0.35; if (hit < dist) dist = Math.max(0.8, hit);
-    this.camDist = dist < this.camDist ? dist : damp(this.camDist, dist, 4, dt);
-    const cp = t.clone().addScaledVector(dir, this.camDist); cp.y = Math.max(baseY + 0.35, cp.y);
+    const t = this.camTarget; let dist = this.camWant;
+    // collision with non-cuttable solids (rooftop school, tanks, containers...). Probe a small fan so edges don't flicker.
+    let hit = w.col.ray(t.x, t.y, t.z, dir.x, dir.y, dir.z, dist + 0.4, true);
+    const side = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw)).multiplyScalar(0.35);
+    for (const s of [1, -1]) hit = Math.min(hit, w.col.ray(t.x + side.x * s, t.y, t.z + side.z * s, dir.x, dir.y, dir.z, dist + 0.4, true));
+    if (hit - 0.4 < dist) dist = hit - 0.4 >= 1.4 ? hit - 0.4 : Math.max(0.3, Math.min(1.4, hit - 0.2)); // hugging a wall: go closer rather than into it
+    this.camDist = dist < this.camDist ? dist : damp(this.camDist, dist, 2.2, dt); // snap in (never clip), ease out
+    const cp = t.clone().addScaledVector(dir, this.camDist); cp.y = Math.max(baseY + 0.5, cp.y);
+    if (w.col.pointInSolid(cp.x, cp.y, cp.z, true)) { this.camDist = Math.min(this.camDist, 0.3); cp.copy(t).addScaledVector(dir, 0.3); }
     if (this.shake > 0.001) { const s = this.shake * 0.25; cp.x += (Math.random() - 0.5) * s; cp.y += (Math.random() - 0.5) * s; cp.z += (Math.random() - 0.5) * s; this.shake = Math.max(0, this.shake - dt * 2.5); }
     this.camera.position.copy(cp); this.camera.lookAt(t.x, t.y + 0.1, t.z);
+    // cutaway occluders on sight lines to the player and up to 4 engaged enemies
+    const pts = [new THREE.Vector3(x, baseY + 1.1, z)]; for (const f of eng.slice(0, 4)) pts.push(new THREE.Vector3(f.x, baseY + 1.1, f.z));
+    if (p.layer === 0) this.city.updateCutaway(cp, pts, dt); else this.city.updateCutaway(cp, [], dt);
+    // lock-on / target indicator
+    const tg = w.currentTarget(); const show = !!tg && tg.alive && (eng.length > 0 || w.auto) && tg.distTo(p) < 16 && !w.dialogue;
+    this.lockRing.visible = show;
+    if (show && tg) {
+      const s = Math.max(0.9, tg.radius / 0.45); this.lockRing.position.set(tg.x, tg.layer * ROOF.y + 0.05, tg.z); this.lockRing.scale.setScalar(s); this.lockRing.rotation.y = w.time * 2;
+      const tick = this.lockRing.getObjectByName('lockTick')!; tick.position.y = (2.35 + Math.sin(w.time * 6) * 0.1) * (tg.appearance?.height || 1) / s;
+      (this.lockRing.material as THREE.MeshBasicMaterial).color.set(w.auto ? 0x3ad0ff : 0xff4a3a);
+    }
+  }
+  /** Debug/test: is the camera inside a solid it should not be inside (non-cut solid, or an un-cut building)? */
+  camInsideSolid(): boolean {
+    const c = this.camera.position; if (this.world.col.pointInSolid(c.x, c.y, c.z, true)) return true;
+    for (const inf of this.city.binfos) { const b = inf.b; if (c.x > b.x0 && c.x < b.x1 && c.z > b.z0 && c.z < b.z1 && c.y < b.h * inf.cur) return true; }
+    return false;
   }
   private updateLighting() {
     const w = this.world; const h = w.clock; const c = new THREE.Color();

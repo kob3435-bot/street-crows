@@ -18,7 +18,7 @@ export function generateCity(): CityData {
   const col = new Collision();
   const buildings: Building[] = []; const props: Prop[] = []; const patches: Patch[] = []; const lamps: [number, number][] = []; const neon: Prop[] = [];
   const pick = <T,>(a: T[]) => a[Math.floor(rnd() * a.length)];
-  const addB = (b: Building) => { buildings.push(b); col.addBox({ x0: b.x0, z0: b.z0, x1: b.x1, z1: b.z1, h: b.h, layer: 0 }); };
+  const addB = (b: Building) => { buildings.push(b); const roofTop = b.x0 <= ROOF.rect[0] + 1 && b.x1 >= ROOF.rect[2] - 1 && b.z0 <= ROOF.rect[1] + 1 && b.z1 >= ROOF.rect[3] - 1; col.addBox({ x0: b.x0, z0: b.z0, x1: b.x1, z1: b.z1, h: b.h, layer: 0, cut: !roofTop }); };
   const overlaps = (x0: number, z0: number, x1: number, z1: number, pad = 0.5) => buildings.some(b => x0 < b.x1 + pad && x1 > b.x0 - pad && z0 < b.z1 + pad && z1 > b.z0 - pad);
   const solidProp = (p: Prop, w: number, d: number, h: number) => { props.push(p); const c = Math.abs(Math.cos(p.rot || 0)) > 0.5; const hw = (c ? w : d) / 2, hd = (c ? d : w) / 2; col.addBox({ x0: p.x - hw, z0: p.z - hd, x1: p.x + hw, z1: p.z + hd, h, layer: p.layer || 0 }); };
   const fence = (x0: number, z0: number, x1: number, z1: number, gaps: [number, number][] = [], h = 2.2, color = '#5a6a60', layer = 0) => {

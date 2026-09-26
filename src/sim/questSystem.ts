@@ -1,4 +1,4 @@
-import { QUESTS, QUEST_BY_ID, ENCOUNTERS, type QuestDef, type Step } from '../data/quests';
+import { QUESTS, QUEST_BY_ID, ENCOUNTERS, FRIENDLY_AFTER, type QuestDef, type Step } from '../data/quests';
 import { PLACES, ROOF } from '../data/city';
 import { tx } from '../core/i18n';
 import type { World } from './world';
@@ -27,7 +27,7 @@ export class QuestSystem {
         if (w.dialogue && s.kind !== 'defeat' && s.kind !== 'boss') continue;
         a.begun = true;
         if (s.kind === 'say') { w.say(s.say, () => this.completeStep(a)); continue; }
-        if (s.kind !== 'defeat' && s.kind !== 'boss' && s.say && !a.seen) { a.seen = true; w.say(s.say); }
+        if (s.kind !== 'defeat' && s.kind !== 'boss' && s.kind !== 'talk' && s.say && !a.seen) { a.seen = true; w.say(s.say); } // talk lines play when you actually talk to the NPC
         this.updateCheckpoint(a);
       }
       if (w.dialogue && s.kind !== 'defeat' && s.kind !== 'boss') continue;
@@ -42,7 +42,7 @@ export class QuestSystem {
           const e = ENCOUNTERS[s.enc]; const st = w.encounters.get(s.enc); const pl = PLACES[e.place];
           if (!st) {
             const near = (pl.layer || 0) === p.layer && Math.hypot(pl.pos[0] - p.x, pl.pos[1] - p.z) < 32;
-            if (near && (!e.night || w.isNight) && p.alive && w.downT <= 0 && !w.dialogue) { w.spawnEncounter(s.enc, a.id); if (s.say && !a.seen) { a.seen = true; w.say(s.say); } }
+            if (near && (!e.night || w.isNight) && p.alive && w.downT <= 0 && !w.dialogue) { w.spawnEncounter(s.enc, a.id); if (s.heal) { p.hp = p.maxHp; w.emit('toast', { text: tx({ th: 'ฟื้นพลังเต็ม', en: 'HP fully restored' }) }); } if (s.say && !a.seen) { a.seen = true; w.say(s.say); } }
           } else if (!st.done && st.fighters.every(f => !f.alive)) {
             st.done = true; w.emit('encounterDone', { id: s.enc });
             if (s.after) w.say(s.after, () => this.completeStep(a)); else this.completeStep(a);
@@ -81,8 +81,7 @@ export class QuestSystem {
     const exp = w.progress.addExp(q.reward.exp); const money = w.progress.addMoney(q.reward.money); const rep = w.progress.addRep(q.reward.rep);
     if (q.reward.sp) w.progress.skillPoints += q.reward.sp;
     if (q.reward.rel) for (const [k, v] of Object.entries(q.reward.rel)) w.addRel(k, v);
-    const friendly: Record<string, string[]> = { main1: ['kurogane'], main2: ['hakuryu'], main3: ['tetsuwan', 'kagero'], side_yamikaze: ['yamikaze'], side_ramen: ['onigawara'] };
-    for (const g of friendly[q.id] || []) w.friendlyGangs.add(g);
+    for (const g of FRIENDLY_AFTER[q.id] || []) w.friendlyGangs.add(g);
     if (this.tracked === q.id) this.tracked = this.active.find(x => this.def(x.id).type === 'main')?.id || this.active[0]?.id || null;
     w.emit('questComplete', { q, exp, money, rep }); w.emit('save', { reason: 'questComplete' });
   }
@@ -106,7 +105,6 @@ export class QuestSystem {
   load(d: { active: { id: string; step: number }[]; done: string[]; flags: string[]; tracked: string | null }) {
     this.done = new Set(d.done.filter(id => QUEST_BY_ID[id])); this.active = d.active.filter(a => QUEST_BY_ID[a.id] && a.step < QUEST_BY_ID[a.id].steps.length).map(a => ({ id: a.id, step: a.step, begun: false, seen: false }));
     this.w.flags = new Set(d.flags || []); this.tracked = d.tracked && this.isActive(d.tracked) ? d.tracked : this.active[0]?.id || null;
-    const friendly: Record<string, string[]> = { main1: ['kurogane'], main2: ['hakuryu'], main3: ['tetsuwan', 'kagero'], side_yamikaze: ['yamikaze'], side_ramen: ['onigawara'] };
-    this.w.friendlyGangs.clear(); for (const id of this.done) for (const g of friendly[id] || []) this.w.friendlyGangs.add(g);
+    this.w.friendlyGangs.clear(); for (const id of this.done) for (const g of FRIENDLY_AFTER[id] || []) this.w.friendlyGangs.add(g);
   }
 }

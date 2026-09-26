@@ -1,5 +1,5 @@
 import { MAP_HALF, ROOF } from '../data/city';
-export interface Box { x0: number; z0: number; x1: number; z1: number; h: number; layer: number; y0?: number }
+export interface Box { x0: number; z0: number; x1: number; z1: number; h: number; layer: number; y0?: number; /** building the renderer can cut away (camera ignores it) */ cut?: boolean }
 export interface Circle { x: number; z: number; r: number; layer: number }
 const CELL = 20, N = Math.ceil((MAP_HALF * 2 + 8) / CELL), OFF = MAP_HALF + 4;
 /** Static world collision: AABB buildings/props + circles, spatial-hashed. Shared by sim and camera. */
@@ -64,10 +64,10 @@ export class Collision {
     return false;
   }
   /** 3D ray vs extruded boxes (camera collision). Returns hit distance or maxD. */
-  ray(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, maxD: number): number {
+  ray(ox: number, oy: number, oz: number, dx: number, dy: number, dz: number, maxD: number, skipCut = false): number {
     const ex = ox + dx * maxD, ez = oz + dz * maxD; const ids = this.query(ox, oz, ex, ez, this.tmp); let best = maxD;
     for (const i of ids) {
-      const b = this.boxes[i]; if (b.h < 1.5) continue; const y0 = b.y0 ?? 0;
+      const b = this.boxes[i]; if (b.h < 1.5 || (skipCut && b.cut)) continue; const y0 = b.y0 ?? (b.layer === 1 ? ROOF.y : 0);
       let tmin = 0, tmax = best; let ok = true;
       const axes: [number, number, number, number][] = [[ox, dx, b.x0, b.x1], [oy, dy, y0, b.h + y0], [oz, dz, b.z0, b.z1]];
       for (const [o, d, lo, hi] of axes) {
@@ -78,6 +78,28 @@ export class Collision {
       if (ok && tmin < best) best = tmin;
     }
     return best;
+  }
+  /** Fast walkability test: does a circle of radius r at (x,z) overlap any collider on this layer? */
+  solidAt(x: number, z: number, r: number, layer: number): boolean {
+    const ids = this.query(x - r, z - r, x + r, z + r, this.tmp);
+    for (const i of ids) {
+      const b = this.boxes[i]; if (b.layer !== layer) continue;
+      const px = Math.max(b.x0, Math.min(x, b.x1)), pz = Math.max(b.z0, Math.min(z, b.z1));
+      if ((x - px) ** 2 + (z - pz) ** 2 < r * r) return true;
+    }
+    const seen = new Set<number>();
+    for (let cx = this.ci(x - r); cx <= this.ci(x + r); cx++) for (let cz = this.ci(z - r); cz <= this.ci(z + r); cz++) for (const i of this.cgrid[cz * N + cx]) {
+      if (seen.has(i)) continue; seen.add(i); const c = this.circles[i];
+      if (c.layer === layer && Math.hypot(x - c.x, z - c.z) < c.r + r) return true;
+    }
+    if (layer === 1) { const [a, b, c, d] = ROOF.rect; if (x < a + r || x > c - r || z < b + r || z > d - r) return true; }
+    const H = MAP_HALF - r; return x < -H || x > H || z < -H || z > H;
+  }
+  /** Camera helper: is the point inside a (non-cut) solid volume? */
+  pointInSolid(x: number, y: number, z: number, skipCut = true): boolean {
+    const ids = this.query(x, z, x, z, this.tmp);
+    for (const i of ids) { const b = this.boxes[i]; if (b.h < 1.5 || (skipCut && b.cut)) continue; const y0 = b.y0 ?? (b.layer === 1 ? ROOF.y : 0); if (x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && y > y0 && y < y0 + b.h) return true; }
+    return false;
   }
   insideSolid(x: number, z: number, layer: number): boolean {
     const ids = this.query(x, z, x, z, this.tmp);

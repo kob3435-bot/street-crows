@@ -127,6 +127,10 @@ kbd { background: var(--ink); color: #fff; padding: 0 6px; font-family: var(--b)
 .tb { position: absolute; width: 62px; height: 62px; border-radius: 50%; border: 3px solid #111; background: rgba(251,248,240,.85); font-family: var(--b), var(--f); font-size: 15px; display: flex; align-items: center; justify-content: center; pointer-events: auto; box-shadow: 2px 2px 0 #111; color: #111; line-height: 1; text-align: center; }
 .tb.big { width: 80px; height: 80px; font-size: 20px; background: rgba(214,38,58,.9); color: #fff; }
 .tb.on { transform: scale(.9); background: var(--gold); color: #111; }
+.tb.autob { width: 72px; height: 42px; border-radius: 21px; font-size: 14px; font-weight: 900; letter-spacing: .5px; background: rgba(40,44,56,.85); color: #fff; }
+.tb.autob small { font-size: 11px; color: #ff8a8a; }
+.tb.autob.lit { background: #1fb6e8; color: #081018; box-shadow: 0 0 12px 3px rgba(60,200,255,.8), 2px 2px 0 #111; }
+.tb.autob.lit small { color: #081018; }
 .tb.sp.ready { background: var(--gold); animation: pulse .6s infinite alternate; } @keyframes pulse { to { box-shadow: 0 0 16px 4px #ffd23a; } }
 #touch .top { position: absolute; right: 196px; top: 10px; display: flex; gap: 8px; pointer-events: none; }
 #touch .top .tb { position: relative; width: 48px; height: 48px; font-size: 13px; }
@@ -144,3 +148,7 @@ body.touchmode #keys { display: none; }
 
 @media (orientation: portrait) { body.touchmode #touch .top { right: auto; left: 10px; top: 188px; flex-direction: column; } }
 @media (orientation: landscape) and (max-height: 520px) { body.touchmode #h-quest { position: fixed; left: 12px; top: 150px; width: 30vw; right: auto; } body.touchmode #h-zone { display: none; } }
+
+#h-auto { position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: none; background: rgba(20,24,32,.82); color: #7fe0ff; border: 2px solid #1fb6e8; border-radius: 14px; padding: 3px 12px; font-weight: 800; font-size: 13px; white-space: nowrap; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+#h-auto.eng { color: #fff; background: rgba(31,182,232,.85); }
+body.touchmode #h-auto { left: auto; right: max(12px, env(safe-area-inset-right)); transform: none; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 256px); max-width: 60vw; }

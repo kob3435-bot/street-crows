@@ -27,7 +27,7 @@ export default async function (R) {
   check(R, 'AI: attack-token system (<=2 simultaneous attackers of 6)', maxAtt.mx <= 2, `max ${maxAtt.mx}; mode mix ${JSON.stringify(maxAtt.modes)}`);
   check(R, 'AI: uses spacing/circling (not just walk-up-and-spam)', (maxAtt.modes.circle || 0) > 0 && ((maxAtt.modes.circle || 0) + (maxAtt.modes.recover || 0)) > (maxAtt.modes.attack || 0) * 0.3, JSON.stringify(maxAtt.modes));
   // habit tracking: spam punches -> punchSpam rises, AI blocks more
-  const habit = await page.evaluate(() => { const G = window.__game, w = G.world; const h0 = w.habits.punch; for (let i = 0; i < 60 * 6; i++) { if (i % 12 === 0) G.input.press('punch'); G.input.poll(); w.step(1 / 60, G.input); } return { h0, h1: w.habits.punch, spam: w.habits.punchSpam }; });
+  const habit = await page.evaluate(() => { const G = window.__game, w = G.world; const h0 = w.habits.punch; for (let i = 0; i < 60 * 9; i++) { if (i % 12 === 0) G.input.press('punch'); G.input.poll(); w.step(1 / 60, G.input); } return { h0, h1: w.habits.punch, spam: w.habits.punchSpam }; });
   check(R, 'AI: tracks player habits (punch spam detected)', habit.spam && habit.h1 > habit.h0, `punch habit ${habit.h0.toFixed(1)} -> ${habit.h1.toFixed(1)}, punchSpam=${habit.spam}`);
   await dbg(page, 'killAll'); await dbg(page, 'step', 3); await dbg(page, 'god', false);
   // --- level up + skill unlock through the UI

@@ -6,9 +6,9 @@ export type FState = 'idle' | 'move' | 'attack' | 'hitstun' | 'blockstun' | 'kno
 export interface Mods {
   dmg: number; punch: number; kick: number; def: number; speed: number; atkSpeed: number; guardMax: number; guardTake: number; counter: number; counterWin: number;
   finisher: number; meter: number; perfectWin: number; slowmo: number; dodgeDist: number; dodgeIframe: number; dodgeCost: number; getup: number; fly: number;
-  throwDmg: number; throwHitsOthers: boolean; sprintCost: number; earthshaker: boolean; combo3: boolean; comboWin: number; lastStand: boolean; stunMul: number; guardDmgMul: number; meteor: boolean;
+  throwDmg: number; throwHitsOthers: boolean; sprintCost: number; earthshaker: boolean; combo3: boolean; comboWin: number; lastStand: boolean; stunMul: number; guardDmgMul: number; meteor: boolean; packBreaker: boolean; afterimage: boolean;
 }
-export const baseMods = (): Mods => ({ dmg: 1, punch: 1, kick: 1, def: 1, speed: 1, atkSpeed: 1, guardMax: 100, guardTake: 0.15, counter: 1, counterWin: 0.45, finisher: 1, meter: 1, perfectWin: 0.16, slowmo: 0.7, dodgeDist: 1, dodgeIframe: 0.26, dodgeCost: 18, getup: 1, fly: 1, throwDmg: 1, throwHitsOthers: false, sprintCost: 14, earthshaker: false, combo3: false, comboWin: 0, lastStand: false, stunMul: 1, guardDmgMul: 1, meteor: false });
+export const baseMods = (): Mods => ({ dmg: 1, punch: 1, kick: 1, def: 1, speed: 1, atkSpeed: 1, guardMax: 100, guardTake: 0.15, counter: 1, counterWin: 0.45, finisher: 1, meter: 1, perfectWin: 0.16, slowmo: 0.7, dodgeDist: 1, dodgeIframe: 0.26, dodgeCost: 18, getup: 1, fly: 1, throwDmg: 1, throwHitsOthers: false, sprintCost: 14, earthshaker: false, combo3: false, comboWin: 0, lastStand: false, stunMul: 1, guardDmgMul: 1, meteor: false, packBreaker: false, afterimage: false });
 
 let NEXT_ID = 1;
 export class Fighter {
@@ -26,6 +26,7 @@ export class Fighter {
   ai: AIBrain | null = null; phases: BossPhase[] | null = null; phase = 0; special = ''; moveset: string[] = ['jab', 'jab2', 'kick'];
   aggro = false; loiter = true; feud = ''; hostileToPlayer = true; civilian = false; encounter = ''; displayTitle = ''; expValue = 20; moneyValue = 100;
   animT = 0; speedNow = 0; lastHitTime = 0; comboCount = 0; comboTimer = 0; telegraph = 0; stanceHit = false; slowmo = 1; throwHits: Fighter | null = null; moveInstance = 0; lastAttacker: Fighter | null = null; bubble = ''; bubbleT = 0;
+  variant = ''; buffed = false; patrol: { leader: Fighter | null; tx: number; tz: number; zone: string; ox: number; oz: number } | null = null; group: any = undefined;
 
   get alive() { return this.state !== 'ko' && this.hp > 0; }
   get busy() { return !(this.state === 'idle' || this.state === 'move' || this.state === 'block'); }

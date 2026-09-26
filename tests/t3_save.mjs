@@ -12,7 +12,7 @@ export default async function (R) {
   await page.keyboard.press('Tab'); await sleep(200); await page.click('[data-t="save"]'); await sleep(300);
   await page.click('[data-save="1"]'); await sleep(400);
   const raw = await page.evaluate(() => localStorage.getItem('streetcrows.save.1'));
-  check(R, 'save: manual save to slot 1 via menu', !!raw && JSON.parse(raw).version === 2);
+  check(R, 'save: manual save to slot 1 via menu (schema v3)', !!raw && JSON.parse(raw).version === 3);
   await page.evaluate(() => localStorage.removeItem('streetcrows.save.auto'));
   // reload fresh and continue from the title screen
   await page.goto(BASE + '?test=1'); await page.waitForFunction(() => window.__game && window.__game.ready);
@@ -37,9 +37,18 @@ export default async function (R) {
   check(R, 'corrupt save: raw data backed up', await page.evaluate(() => !!localStorage.getItem('streetcrows.save.corrupt.1')));
   await page.click('[data-m="new"]'); await sleep(500);
   check(R, 'corrupt save: new game still playable', (await state(page)).active.includes('tutorial:0'));
-  // v1 -> v2 migration
-  const mig = await page.evaluate(async () => { const v1 = JSON.parse(JSON.stringify(window.__game.world.serialize())); v1.version = 1; v1.relationships = { kenta: 42 }; delete v1.relations; delete v1.time; localStorage.setItem('streetcrows.save.3', JSON.stringify(v1)); const d = await window.__game.save.load('3'); return d && d.version === 2 && d.relations.kenta === 42 && typeof d.time === 'number'; });
-  check(R, 'save schema: v1 save migrates to v2', mig);
+  // v1 -> v3 migration
+  const mig = await page.evaluate(async () => { const v1 = JSON.parse(JSON.stringify(window.__game.world.serialize())); v1.version = 1; v1.relationships = { kenta: 42 }; delete v1.relations; delete v1.time; delete v1.auto; delete v1.bestiary; localStorage.setItem('streetcrows.save.3', JSON.stringify(v1)); const d = await window.__game.save.load('3'); return d && d.version === 3 && d.relations.kenta === 42 && typeof d.time === 'number' && d.auto === false && Array.isArray(d.bestiary); });
+  check(R, 'save schema: v1 save migrates to v3', mig);
+  // v2 (previous release: chapters 1-3 finished) -> v3: loads, keeps progress, chapter 4 starts
+  const mig2 = await page.evaluate(async () => {
+    const G = window.__game, w = G.world; const v2 = JSON.parse(JSON.stringify(w.serialize())); v2.version = 2; delete v2.auto; delete v2.bestiary;
+    v2.quests = { active: [], done: ['tutorial', 'main1', 'main2', 'main3', 'side_cat'], flags: [], tracked: null }; v2.bosses = ['onoda', 'kirishima', 'goda', 'hayate']; v2.prog.level = 7;
+    localStorage.setItem('streetcrows.save.2', JSON.stringify(v2)); const d = await G.save.load('2'); if (!d) return { ok: false, why: 'null' };
+    w.load(d); G.debug.step(1.5); const list = await G.save.list(); const meta = list.find(m => m.slot === '2');
+    return { ok: d.version === 3 && d.auto === false && d.bestiary.includes('kirishima') && w.quests.done.has('main3') && w.progress.level === 7 && w.quests.isActive('main4') && [...w.friendlyGangs].includes('kurogane'), meta: meta && meta.chapter, active: w.quests.active.map(a => a.id) };
+  });
+  check(R, 'save schema: v2 save (ch1-3 done) migrates to v3, progress kept, chapter 4 auto-starts', mig2.ok, JSON.stringify(mig2));
   const errs = [...logs.filter(l => !l.includes('corrupt')), ...(await page.evaluate(() => window.__game.errors))].filter(l => !l.startsWith('console: [save]'));
   check(R, 'save tests: zero runtime errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await b.close();

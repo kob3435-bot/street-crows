@@ -54,6 +54,7 @@ export class AIBrain {
       if (h.dodgeHappy) { p.feint += 0.25; p.patience += 0.8; }
     }
     if (w.progress.has('intimidate') && this.f.tier === 'grunt') { p.aggression *= 0.75; p.patience += 1; }
+    if (this.f.buffed) { p.aggression += 0.15; p.speed *= 1.08; p.patience *= 0.8; }
     p.blockRate = clamp(p.blockRate, 0, 0.9); p.dodgeRate = clamp(p.dodgeRate, 0, 0.8); p.counterRate = clamp(p.counterRate, 0, 0.9);
     return p;
   }
@@ -99,7 +100,7 @@ export class AIBrain {
         const r = p.range + (engaged > 2 && !w.coord.holds(f, t) ? 1.0 : 0);
         const gx = t.x + Math.sin(ang) * r, gz = t.z + Math.cos(ang) * r;
         this.moveToward(gx, gz, false, dts, w, 0.75);
-        if (f.charId === 'kirishima' || (this.base.blockRate > 0.5 && Math.random() < 0.02)) { f.wantBlock = dist < 3.5; }
+        if ((p.guardStance ?? 0) > 0.5 || (this.base.blockRate > 0.5 && Math.random() < 0.02)) { f.wantBlock = dist < 3.5; }
         const vulnerable = this.vulnerable(t);
         if (vulnerable && dist < 4.2 && w.coord.request(f, t, engaged, f.tier !== 'grunt')) { this.beginAttack(p, t, w, 1 + Math.floor(Math.random() * 2)); break; }
         if (this.decisionT <= 0) {
@@ -129,8 +130,8 @@ export class AIBrain {
         break;
       }
       case 'recover': {
-        f.faceYaw = toT; const back = (f.charId === 'hayate' ? 6.5 : p.range + 1.2);
-        if (dist < back) { f.intentX = -dx / dist * 0.8; f.intentZ = -dz / dist * 0.8; f.wantSprint = f.charId === 'hayate'; }
+        f.faceYaw = toT; const back = (p.hitRun ? 6.5 : p.range + 1.2);
+        if (dist < back) { f.intentX = -dx / dist * 0.8; f.intentZ = -dz / dist * 0.8; f.wantSprint = !!p.hitRun; }
         else { f.intentX = Math.cos(toT) * 0.5 * this.circleDir; f.intentZ = -Math.sin(toT) * 0.5 * this.circleDir; }
         if (this.modeT > 0.6 + Math.random() * 0.5) this.setMode('circle');
         break;

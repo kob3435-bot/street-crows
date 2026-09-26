@@ -3,13 +3,14 @@
  * LocalStorageSaveProvider is the v1 backend; a CloudSaveProvider can implement the
  * same async interface later (REST/Firebase/etc.) without touching game code.
  */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export interface SaveData {
   version: number; savedAt: number; playTime: number;
   player: { x: number; z: number; layer: number; yaw: number; hp: number; stamina: number; meter: number };
   prog: { level: number; exp: number; statPoints: number; skillPoints: number; stats: Record<string, number>; skills: string[]; rep: number; money: number; inventory: Record<string, number> };
   quests: { active: { id: string; step: number }[]; done: string[]; flags: string[]; tracked: string | null };
   bosses: string[]; relations: Record<string, number>; custom: Record<string, any>; time: number; stats?: Record<string, number>;
+  /** v3 */ auto?: boolean; bestiary?: string[];
 }
 export interface SaveMeta { slot: string; savedAt: number; level: number; playTime: number; chapter: string }
 export interface SaveProvider {
@@ -24,6 +25,8 @@ type Migration = (d: any) => any;
 // v1 -> v2: v1 stored 'relationships' and had no 'time'; normalise.
 const MIGRATIONS: Record<number, Migration> = {
   1: (d) => ({ ...d, version: 2, relations: d.relations || d.relationships || {}, time: d.time ?? 15.5, stats: d.stats || {} }),
+  // v2 -> v3: chapters 4-10 update. Adds AUTO state and a bestiary (seeded from defeated bosses).
+  2: (d) => ({ ...d, version: 3, auto: false, bestiary: Array.isArray(d.bosses) ? [...d.bosses] : [] }),
 };
 
 export function migrate(raw: any): SaveData | null {
@@ -74,7 +77,8 @@ export class LocalStorageSaveProvider implements SaveProvider {
       try {
         const raw = localStorage.getItem(PREFIX + slot); if (!raw) continue;
         const d = migrate(JSON.parse(raw)); if (!d) continue;
-        const ch = d.quests.done.includes('main3') ? 'END' : d.quests.done.includes('main2') ? 'Ch.3' : d.quests.done.includes('main1') ? 'Ch.2' : d.quests.done.includes('tutorial') ? 'Ch.1' : 'Prologue';
+        let n = 0; for (let i = 1; i <= 10; i++) if (d.quests.done.includes('main' + i)) n = i;
+        const ch = n >= 10 ? 'Post-game' : n > 0 ? 'Ch.' + (n + 1) : d.quests.done.includes('tutorial') ? 'Ch.1' : 'Prologue';
         out.push({ slot, savedAt: d.savedAt, level: d.prog.level, playTime: d.playTime, chapter: ch });
       } catch {}
     }

@@ -13,6 +13,7 @@ const el = (html: string) => { const d = document.createElement('div'); d.innerH
 export const SPEAKER: Record<string, { th: string; en: string }> = { narrator: { th: 'บรรยาย', en: 'Narrator' }, thug: { th: 'นักเลง', en: 'Thug' }, granny: { th: 'คุณยาย', en: 'Grandma' } };
 export function speakerName(id: string) { if (SPEAKER[id]) return tx(SPEAKER[id]); const c = CHAR_BY_ID[id]; return c ? tx(c.name) : id; }
 
+const T = (th: string, en: string) => tx({ th, en });
 /** In-game HUD: bars, minimap, quest tracker, boss bar, tags, dialogue, toasts, hints. */
 export class HUD {
   root: HTMLElement; mm: HTMLCanvasElement; mmc: CanvasRenderingContext2D; mapImg: HTMLCanvasElement; tags: HTMLElement; tagPool: HTMLElement[] = []; bubblePool: HTMLElement[] = [];
@@ -30,10 +31,10 @@ export class HUD {
       <div class="hud-tr"><canvas id="minimap" width="200" height="200"></canvas><div class="zone" id="h-zone"></div><div class="quest" id="h-quest"></div></div>
       <div id="boss"><div class="bn" id="b-name"></div><div class="bar"><b id="b-hpb"></b><i id="b-hp"></i></div><div class="phases" id="b-ph"></div></div>
       <div id="combo"><b id="c-n">0</b><span>${t('hits')}</span></div>
-      <div id="tags"></div><div id="toasts"></div>
+      <div id="tags"></div><div id="toasts"></div><div id="h-auto"></div>
       <div id="prompt" class="panel"></div>
       <div id="hint" class="panel"></div>
-      <div id="chat"></div><div id="fps"></div><div id="keys"><kbd>Tab</kbd>${t('menu')} <kbd>M</kbd>${t('map')} <kbd>H</kbd>${t('controls')} <kbd>E</kbd>${t('interactKey')}</div>
+      <div id="chat"></div><div id="fps"></div><div id="keys"><kbd>Tab</kbd>${t('menu')} <kbd>M</kbd>${t('map')} <kbd>H</kbd>${t('controls')} <kbd>E</kbd>${t('interactKey')} <kbd>T</kbd>AUTO <kbd>Wheel</kbd>${T('ซูม', 'Zoom')}</div>
       <div id="fade"><span></span></div>
     </div>`);
     parent.appendChild(this.root);
@@ -65,15 +66,23 @@ export class HUD {
     bus.on('bossDefeated', (e) => this.toast(`${t('ko')} ${e.f.name}`, 'gold'));
     bus.on('playerDown', () => { const f = this.q('#fade'); f.classList.add('on'); (f.firstElementChild as HTMLElement).textContent = t('youLose'); });
     bus.on('respawn', (e) => { this.q('#fade').classList.remove('on'); if (e.lost) this.toast(`-¥${e.lost}`, 'small red'); });
-    bus.on('streetEvent', (e) => { const m: Record<string, [string, string]> = { bully: ['มีเด็กโดนรังแก! ไปช่วยกันเถอะ', 'Someone is being bullied! Help out'], challenge: ['มีคนมาท้าดวล!', 'A challenger appears!'], gangwar: ['แก๊งตีกันอยู่ใกล้ๆ!', 'Gang fight nearby!'], ambush: ['โดนซุ่มโจมตี!', 'Ambush!'] }; this.toast('! ' + T(...m[e.kind]), 'gold'); });
+    bus.on('streetEvent', (e) => { const m: Record<string, [string, string]> = { bully: ['มีเด็กโดนรังแก! ไปช่วยกันเถอะ', 'Someone is being bullied! Help out'], challenge: ['มีคนมาท้าดวล!', 'A challenger appears!'], gangwar: ['แก๊งตีกันอยู่ใกล้ๆ!', 'Gang fight nearby!'], ambush: ['โดนซุ่มโจมตี!', 'Ambush!'], rumble: ['ศึกตะลุมบอนกลางถนน!', 'Street rumble!'], robbery: ['มีโจรปล้นร้านค้า!', 'A shop is being robbed!'] }; this.toast('! ' + T(...m[e.kind]), 'gold'); });
     bus.on('eventDone', (e) => this.toast(`${T('เหตุการณ์สำเร็จ', 'Event cleared')}  +${e.rep} ${t('rep')}  ¥${e.money}`, 'small gold'));
     bus.on('itemUsed', (e) => this.toast(T('ใช้ไอเทม', 'Used item') + ' ✓', 'small'));
     bus.on('chat', (m) => { let txt = m.text; try { txt = tx(JSON.parse(m.text)); } catch {} const d = el(`<div><b></b> </div>`); (d.firstChild as HTMLElement).textContent = m.from + ':'; d.append(' ' + txt); this.q('#chat').appendChild(d); setTimeout(() => d.remove(), 9000); });
     bus.on('relation', (e) => { const c = CHAR_BY_ID[e.id]; if (c) this.toast(`${tx(c.name)} ♥ ${e.value}`, 'small'); });
     bus.on('toast', (e) => this.toast(e.text, 'small'));
+    bus.on('autoToggle', (e) => { this.toast(e.on ? T('AUTO เปิด: เดินหาศัตรูอัตโนมัติ (ต่อยเองนะ!)', 'AUTO ON: walks to enemies (you still fight!)') : T('AUTO ปิด', 'AUTO OFF'), e.on ? 'small blue' : 'small'); if (e.on) this.hint('auto', 'AUTO', T('AUTO จะเดินไปหาศัตรูที่ใกล้ที่สุดและหยุดในระยะต่อย แต่ <b>ไม่โจมตี/การ์ด/หลบให้</b> ขยับจอยหรือ WASD เพื่อควบคุมเองได้ทันที', 'AUTO walks to the nearest enemy and stops in punching range, but <b>never attacks, blocks or dodges</b>. Move the stick / WASD to take over at any time.')); });
+    bus.on('autoNoTarget', (e) => {
+      let dir = ''; if (e.dir !== null && e.dist > 8) { const F = Math.atan2(-Math.sin(this.w.camYaw), -Math.cos(this.w.camYaw)); let rel = e.dir - F; while (rel > Math.PI) rel -= Math.PI * 2; while (rel < -Math.PI) rel += Math.PI * 2; dir = ' ' + ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'][((Math.round(-rel / (Math.PI / 4)) % 8) + 8) % 8] + ' ' + Math.round(e.dist) + 'm'; }
+      this.toast(T('AUTO: ไม่มีศัตรูใกล้ๆ', 'AUTO: no enemies nearby') + (dir ? '  ' + T('เป้าหมายเควส', 'quest') + dir : ''), 'small');
+    });
     bus.on('teleport', () => { this.r.camTarget.set(0, 0, 0); });
   }
+  private autoTxt = '';
   update(dt: number) {
+    { const w = this.w; let s = ''; if (w.auto) { const st = w.autoStatus; const tn = w.autoTarget?.alive ? w.autoTarget.name : ''; s = st === 'paused' ? 'AUTO ⏸' : st === 'manual' ? 'AUTO · ' + T('ควบคุมเอง', 'manual') : st === 'none' ? 'AUTO · ' + T('ไม่มีศัตรู', 'no target') : st === 'engage' ? 'AUTO ◉ ' + tn : 'AUTO ▶ ' + tn; }
+      if (s !== this.autoTxt) { this.autoTxt = s; const e = this.q('#h-auto'); e.textContent = s; e.style.display = s ? 'block' : 'none'; e.classList.toggle('eng', w.autoStatus === 'engage'); } }
     const w = this.w, p = w.player, g = w.progress, $ = (s: string) => this.q(s);
     this.root.classList.toggle('hidden', w.menuOpen);
     $('#h-hp').style.width = (p.hp / p.maxHp * 100) + '%'; $('#h-hpb').style.width = (p.hp / p.maxHp * 100) + '%'; $('#h-hpt').textContent = `${Math.ceil(p.hp)}/${p.maxHp}`;

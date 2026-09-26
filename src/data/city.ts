@@ -21,14 +21,14 @@ export const ARCADE: [number, number, number, number] = [-4, -78, 4, -8]; // sho
 export const ZONES: ZoneDef[] = [
   { id: 'kurogane', kind: 'school', name: { th: 'โรงเรียนคุโรงาเนะ', en: 'Kurogane High' }, rect: [-198, -198, -84, -86], gang: 'kurogane', spawnDensity: 1 },
   { id: 'hakuryu', kind: 'school', name: { th: 'สถาบันฮาคุริว', en: 'Hakuryu Academy' }, rect: [84, -198, 198, -86], gang: 'hakuryu', spawnDensity: 1 },
-  { id: 'residential_n', kind: 'res', name: { th: 'ย่านที่พักทิศเหนือ', en: 'North Residential' }, rect: [-76, -198, 76, -86], spawnDensity: 0.2 },
+  { id: 'residential_n', kind: 'res', name: { th: 'ย่านที่พักทิศเหนือ', en: 'North Residential' }, rect: [-76, -198, 76, -86], gang: 'raijin', spawnDensity: 0.9 },
   { id: 'residential_w', kind: 'res', name: { th: 'ซอยหลังคุโรงาเนะ', en: 'Kurogane Backstreets' }, rect: [-198, -78, -84, -8], gang: 'kurogane', spawnDensity: 0.6 },
   { id: 'alleys', kind: 'alley', name: { th: 'ตรอกหลังเมือง', en: 'Back Alleys' }, rect: [-76, -78, -16, -8], gang: 'kagero', spawnDensity: 0.8 },
   { id: 'shotengai', kind: 'shop', name: { th: 'ย่านการค้าฮิโนเดะ', en: 'Hinode Shopping Street' }, rect: [-16, -78, 30, -8], gang: 'onigawara', spawnDensity: 0.5 },
-  { id: 'office_e', kind: 'office', name: { th: 'ย่านออฟฟิศ', en: 'Office District' }, rect: [30, -78, 198, -8], gang: 'hakuryu', spawnDensity: 0.3 },
+  { id: 'office_e', kind: 'office', name: { th: 'ย่านออฟฟิศ', en: 'Office District' }, rect: [30, -78, 198, -8], gang: 'shinsei', spawnDensity: 0.8 },
   { id: 'mainroad', kind: 'road', name: { th: 'ถนนชูโอ', en: 'Chuo Main Road' }, rect: [-198, -8, 198, 8], gang: 'yamikaze', spawnDensity: 0.3 },
-  { id: 'park', kind: 'park', name: { th: 'สวนมิโดริ', en: 'Midori Park' }, rect: [-198, 8, -84, 96], spawnDensity: 0.3 },
-  { id: 'residential_c', kind: 'res', name: { th: 'ย่านที่พักกลางเมือง', en: 'Central Residential' }, rect: [-76, 8, 4, 96], spawnDensity: 0.2 },
+  { id: 'park', kind: 'park', name: { th: 'สวนมิโดริ', en: 'Midori Park' }, rect: [-198, 8, -84, 96], gang: 'nora', spawnDensity: 0.5 },
+  { id: 'residential_c', kind: 'res', name: { th: 'ย่านที่พักกลางเมือง', en: 'Central Residential' }, rect: [-76, 8, 4, 96], gang: 'nora', spawnDensity: 0.45 },
   { id: 'parking', kind: 'parking', name: { th: 'ลานจอดรถ', en: 'Parking Lot' }, rect: [4, 8, 76, 96], gang: 'yamikaze', spawnDensity: 0.9 },
   { id: 'station', kind: 'station', name: { th: 'สถานีอาเคโบโนะ', en: 'Akebono Station' }, rect: [84, 8, 198, 96], gang: 'rokkaku', spawnDensity: 0.2 },
   { id: 'riverside', kind: 'river', name: { th: 'ริมแม่น้ำและสะพาน', en: 'Riverside & Bridge' }, rect: [-198, 96, 198, 148], gang: 'kawabata', spawnDensity: 0.2 },
@@ -65,7 +65,7 @@ export const POND: [number, number, number] = [-150, 60, 14]; // cx, cz, r
 // Rooftop of Kurogane main building (separate layer)
 export const ROOF = { rect: [-188, -190, -106, -170] as [number, number, number, number], y: 15, door: [-130, -166] as [number, number], roofSpawn: [-130, -173] as [number, number] };
 
-export interface Interactable { id: string; pos: [number, number]; kind: 'npc' | 'shop' | 'door' | 'bench' | 'bus' | 'item' | 'board'; label: LText; npc?: string; layer?: number }
+export interface Interactable { id: string; pos: [number, number]; kind: 'npc' | 'shop' | 'door' | 'bench' | 'bus' | 'item' | 'board'; label: LText; npc?: string; layer?: number; req?: string }
 export const INTERACTABLES: Interactable[] = [
   { id: 'npc_kenta', kind: 'npc', npc: 'kenta', pos: [136, 4], label: { th: 'คุยกับเคนตะ', en: 'Talk to Kenta' } },
   { id: 'shop_ramen', kind: 'shop', pos: [-3.5, -34], label: { th: 'ร้านราเมง (ฟื้นพลัง/ซื้อ)', en: 'Ramen Shop (heal / buy)' } },
@@ -88,6 +88,16 @@ export const INTERACTABLES: Interactable[] = [
   { id: 'bus_south', kind: 'bus', pos: [-8, 150], label: { th: 'ป้ายรถเมล์ (เดินทางด่วน)', en: 'Bus stop (fast travel)' } },
   { id: 'bus_park', kind: 'bus', pos: [-88, 20], label: { th: 'ป้ายรถเมล์ (เดินทางด่วน)', en: 'Bus stop (fast travel)' } },
   { id: 'item_cat', kind: 'item', pos: [-170, 88], label: { th: 'แมวสามสี!', en: 'A calico cat!' } },
+  // chapter 4+ NPCs (appear once the related quest is done; hidden while that character is fighting)
+  { id: 'npc_taisho', kind: 'npc', npc: 'taisho', pos: [-3.2, -38], req: 'main4', label: { th: 'คุยกับไทโช', en: 'Talk to Taisho' } },
+  { id: 'npc_ryo', kind: 'npc', npc: 'ryo', pos: [-100, -14], req: 'main1', label: { th: 'คุยกับเรียว', en: 'Talk to Ryo' } },
+  { id: 'npc_kai', kind: 'npc', npc: 'kai', pos: [-30, -12], req: 'main3', label: { th: 'คุยกับไค', en: 'Talk to Kai' } },
+  { id: 'npc_onoda', kind: 'npc', npc: 'onoda', pos: [-150, -112], req: 'main4', label: { th: 'คุยกับโอโนดะ', en: 'Talk to Onoda' } },
+  { id: 'npc_kirishima', kind: 'npc', npc: 'kirishima', pos: [150, -112], req: 'main5', label: { th: 'คุยกับคิริชิมะ', en: 'Talk to Kirishima' } },
+  { id: 'npc_goda', kind: 'npc', npc: 'goda', pos: [-100, 162], req: 'main6', label: { th: 'คุยกับโกดะ', en: 'Talk to Goda' } },
+  { id: 'npc_todoroki', kind: 'npc', npc: 'todoroki', pos: [-20, -86.5], req: 'main6', label: { th: 'คุยกับโทโดโรกิ', en: 'Talk to Todoroki' } },
+  { id: 'npc_sakaki', kind: 'npc', npc: 'sakaki', pos: [-126, -93], label: { th: 'คุยกับซาคากิบาระ', en: 'Talk to Sakakibara-sensei' } },
+  { id: 'board_arena', kind: 'npc', npc: 'kanemura', pos: [126, 154], req: 'main10', label: { th: 'คุยกับคาเนมุระ (ทัวร์นาเมนต์ใต้ดิน)', en: 'Talk to Kanemura (Underground Tournament)' } },
 ];
 export const BUS_STOPS = INTERACTABLES.filter(i => i.kind === 'bus');
 
@@ -101,11 +111,21 @@ export const PLACES: Record<string, { pos: [number, number]; layer?: number; nam
   kurogane_roof: { pos: [-140, -180], layer: 1, name: { th: 'ดาดฟ้าคุโรงาเนะ', en: 'Kurogane Rooftop' } },
   hakuryu_yard: { pos: [140, -130], name: { th: 'ลานฮาคุริว', en: 'Hakuryu Courtyard' } },
   park: { pos: [-120, 40], name: { th: 'สวนมิโดริ', en: 'Midori Park' } },
-  parking: { pos: [40, 50], name: { th: 'ลานจอดรถ', en: 'Parking Lot' } },
+  parking: { pos: [40, 41], name: { th: 'ลานจอดรถ', en: 'Parking Lot' } },
   bridge: { pos: [0, 122], name: { th: 'สะพานอาเคโบโนะ', en: 'Akebono Bridge' } },
   underbridge: { pos: [-14, 103], name: { th: 'ใต้สะพาน', en: 'Under the Bridge' } },
   tetsuwan_yard: { pos: [-110, 164], name: { th: 'ลานเท็ตสึวัน', en: 'Tetsuwan Yard' } },
   warehouse: { pos: [100, 170], name: { th: 'โรงงานร้าง', en: 'Old Factory' } },
   alleys: { pos: [-45, -45], name: { th: 'ตรอกหลังเมือง', en: 'Back Alleys' } },
   station_gym: { pos: [185, 34], name: { th: 'ยิมมวยร็อกคาคุ', en: 'Rokkaku Gym' } },
+  north_res: { pos: [-40, -140], name: { th: 'ย่านที่พักทิศเหนือ (ถิ่นไรจิน)', en: 'North Residential (Raijin turf)' } },
+  kita_dori: { pos: [-40, -82], name: { th: 'ถนนคิตะ', en: 'Kita-dori' } },
+  office_plaza: { pos: [140, -43], name: { th: 'ลานย่านออฟฟิศ', en: 'Office Plaza' } },
+  station_plaza: { pos: [145, 35], name: { th: 'ลานหน้าสถานี', en: 'Station Plaza' } },
+  res_c: { pos: [-40, 50], name: { th: 'ย่านที่พักกลางเมือง', en: 'Central Residential' } },
+  south_bank: { pos: [60, 142], name: { th: 'ริมแม่น้ำฝั่งใต้', en: 'South Bank' } },
+  factory_yard: { pos: [132, 158], name: { th: 'ลานโรงงาน (ฐานเก็กโคไค)', en: 'Factory Yard (Gekko HQ)' } },
+  kuro_night: { pos: [-112, -140], name: { th: 'สนามคุโรงาเนะยามค่ำ', en: 'Kurogane Yard at Night' } },
+  arena: { pos: [132, 158], name: { th: 'สังเวียนใต้ดิน', en: 'Underground Arena' } },
 };
+/** Enemy level by zone is in data/enemies.ts; these are extra fast-travel stops unlocked by story. */

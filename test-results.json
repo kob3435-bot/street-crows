@@ -37,7 +37,7 @@
   {
     "name": "movement: WASD + Shift sprint moves player",
     "ok": true,
-    "info": "moved 11.2 m"
+    "info": "moved 12.0 m"
   },
   {
     "name": "combat input: LMB/RMB/F produce attacks",
@@ -82,7 +82,7 @@
   {
     "name": "render: frames rendering",
     "ok": true,
-    "info": "fps 13.8 (software GL), draw calls 297"
+    "info": "fps 13.1 (software GL), draw calls 291"
   },
   {
     "name": "boot: zero console/runtime errors (desktop)",
@@ -92,27 +92,27 @@
   {
     "name": "combat: player beats 3 grunts (no god mode, no items)",
     "ok": true,
-    "info": "22s sim, HP left 24/100"
+    "info": "22s sim, HP left 60/100"
   },
   {
     "name": "progression: EXP / money / rep gained from fights",
     "ok": true,
-    "info": "exp 69 lvl 1 ¥706 rep 18"
+    "info": "exp 69 lvl 1 ¥720 rep 18"
   },
   {
     "name": "AI: attack-token system (<=2 simultaneous attackers of 6)",
     "ok": true,
-    "info": "max 2; mode mix {\"circle\":4657,\"approach\":23,\"attack\":1462,\"recover\":890,\"feint\":168}"
+    "info": "max 2; mode mix {\"circle\":4625,\"approach\":36,\"feint\":294,\"attack\":1425,\"recover\":820}"
   },
   {
     "name": "AI: uses spacing/circling (not just walk-up-and-spam)",
     "ok": true,
-    "info": "{\"circle\":4657,\"approach\":23,\"attack\":1462,\"recover\":890,\"feint\":168}"
+    "info": "{\"circle\":4625,\"approach\":36,\"feint\":294,\"attack\":1425,\"recover\":820}"
   },
   {
     "name": "AI: tracks player habits (punch spam detected)",
     "ok": true,
-    "info": "punch habit 0.1 -> 8.1, punchSpam=true"
+    "info": "punch habit 0.2 -> 12.4, punchSpam=true"
   },
   {
     "name": "progression: level up grants stat + skill points",
@@ -210,6 +210,91 @@
     "info": ""
   },
   {
+    "name": "save: manual save to slot 1 via menu (schema v3)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "load: Continue offered on title after reload",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "load: level/EXP/skills/quests/relations/customization/position restored",
+    "ok": true,
+    "info": "{\"level\":3,\"exp\":130,\"skills\":[\"iron_fist\",\"thick_skin\"],\"done\":[\"tutorial\"],\"active\":[\"main1\",\"side_cat\"],\"rel\":62,\"hair\":\"mohawk\",\"money\":1624,\"x\":-120,\"z\":40,\"clock\":19}"
+  },
+  {
+    "name": "autosave: written after key event (debounced)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "corrupt save: game boots, loads return null, no crash",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "corrupt save: raw data backed up",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "corrupt save: new game still playable",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "save schema: v1 save migrates to v3",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "save schema: v2 save (ch1-3 done) migrates to v3, progress kept, chapter 4 auto-starts",
+    "ok": true,
+    "info": "{\"ok\":true,\"meta\":\"Ch.4\",\"active\":[\"main4\"]}"
+  },
+  {
+    "name": "save tests: zero runtime errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "setup: no dialogue freezing the sim",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "bounds: player cannot leave the map (4 edges, 8 s sprint each)",
+    "ok": true,
+    "info": "[[197.55,197.6,3.1],[197.55,-197.6,0.7],[197.55,0.6,197.6],[197.55,54.8,-197.6]]"
+  },
+  {
+    "name": "bounds: never falls through the ground (y >= 0)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "collision: player never penetrates buildings/water (40 random sprints)",
+    "ok": true,
+    "info": "0/480 samples inside solids"
+  },
+  {
+    "name": "rooftop: door takes you up; cannot walk off the roof",
+    "ok": true,
+    "info": "{\"ok\":true,\"out\":0}"
+  },
+  {
+    "name": "combat: no hits through walls (both directions)",
+    "ok": true,
+    "info": "{\"dist\":1.45,\"tries\":27,\"hits\":0,\"playerHpLost\":-78.7,\"enemyHpLost\":0,\"controlHitsWithoutWall\":9}"
+  },
+  {
+    "name": "world rules: zero runtime errors",
+    "ok": true,
+    "info": ""
+  },
+  {
     "name": "mobile portrait: coarse pointer detected, low quality auto-selected",
     "ok": true,
     "info": "quality 0"
@@ -227,7 +312,7 @@
   {
     "name": "mobile portrait: virtual joystick moves the player",
     "ok": true,
-    "info": "moved 18.4 m"
+    "info": "moved 20.3 m"
   },
   {
     "name": "mobile portrait: drag on right side rotates camera",
@@ -247,7 +332,7 @@
   {
     "name": "mobile portrait: zero console/runtime errors",
     "ok": true,
-    "info": " fps(swiftshader) 39.3"
+    "info": " fps(swiftshader) 37.7"
   },
   {
     "name": "mobile landscape: coarse pointer detected, low quality auto-selected",
@@ -290,9 +375,19 @@
     "info": " fps(swiftshader) 31.5"
   },
   {
+    "name": "visual: screenshots captured (day/combat/boss/golden/night/rooftop)",
+    "ok": true,
+    "info": "heavy/counter hits during combat capture: 7; fps(swiftshader, high) 10.0"
+  },
+  {
+    "name": "visual run: zero console/runtime errors (quality high)",
+    "ok": true,
+    "info": ""
+  },
+  {
     "name": "gamepad: left stick moves, right stick turns camera",
     "ok": true,
-    "info": "moved 4.0 m, dyaw -0.40"
+    "info": "moved 3.8 m, dyaw -0.40"
   },
   {
     "name": "gamepad: X/Y/B trigger punch/heavy/kick",
@@ -306,6 +401,346 @@
   },
   {
     "name": "gamepad: zero runtime errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "camera: default is the wide overview (zoom 11 m, pitch 0.5, ~2x old 5.4 m)",
+    "ok": true,
+    "info": "dist 11.00 m (old 5.4), cam height 6.5 m, horiz 9.7 m"
+  },
+  {
+    "name": "camera: mouse wheel zooms, clamped to [4.5, 18] m",
+    "ok": true,
+    "info": "far 18, near 4.5, dist now 4.50"
+  },
+  {
+    "name": "camera: -/+ keys zoom too",
+    "ok": true,
+    "info": "zoom 7.5"
+  },
+  {
+    "name": "camera: zoom persisted in settings across reload",
+    "ok": true,
+    "info": "saved 14, restored 14"
+  },
+  {
+    "name": "camera: never inside a solid (10 dense spots x 24 angles)",
+    "ok": true,
+    "info": "240 samples, bad: "
+  },
+  {
+    "name": "camera: player not hidden by buildings (cutaway / pull-in)",
+    "ok": true,
+    "info": "0/240 samples with an occluder"
+  },
+  {
+    "name": "camera: wall collision pulls in smoothly (no jitter while standing still)",
+    "ok": true,
+    "info": "dist 2.37, spread 0.000"
+  },
+  {
+    "name": "camera: buildings between camera and player are cut away",
+    "ok": true,
+    "info": "143/240 samples had cut buildings; max 5"
+  },
+  {
+    "name": "camera: auto-framing widens with several engaged enemies",
+    "ok": true,
+    "info": "want 11.0 -> 13.4"
+  },
+  {
+    "name": "camera: lock-on ring shown under the current target",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "camera: gamepad D-pad down/up zooms out/in",
+    "ok": true,
+    "info": "11 -> 12.3 -> 10.1"
+  },
+  {
+    "name": "gamepad: L3 toggles AUTO",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "camera tests: zero runtime errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "AUTO: walks around a building to a hostile (A* path, straight line blocked)",
+    "ok": true,
+    "info": "{\"path\":\"34.4\",\"d\":\"1.75\",\"solidFrames\":0}"
+  },
+  {
+    "name": "AUTO: stops at attack range facing the target",
+    "ok": true,
+    "info": "d 1.75 face err 0.00 status engage"
+  },
+  {
+    "name": "AUTO: never attacks on its own (0 swings, enemy HP unchanged, no attack/block/dodge state)",
+    "ok": true,
+    "info": "swings 0, HP 96->96, states "
+  },
+  {
+    "name": "AUTO: under attack by 3 enemies, still never attacks/blocks/dodges (HP of all enemies unchanged)",
+    "ok": true,
+    "info": "{\"hp0\":[66,66,80],\"hp1\":[66,66,80],\"swings\":0,\"hits\":0,\"bad\":[],\"st\":\"seek\",\"near\":2.2302981951320433}"
+  },
+  {
+    "name": "AUTO: targets nearest, re-targets when the target is defeated",
+    "ok": true,
+    "info": "{\"first\":true,\"second\":true,\"d2\":1.7365517008268,\"st\":\"engage\"}"
+  },
+  {
+    "name": "AUTO: player movement input takes over (moves away while held)",
+    "ok": true,
+    "info": "{\"d0\":14.415345055219198,\"dMan\":19.51539091207282,\"stMan\":\"manual\",\"stHold\":\"manual\",\"dAfter\":1.7510889603317092,\"st\":\"engage\"}"
+  },
+  {
+    "name": "AUTO: resumes ~0.5 s after input stops",
+    "ok": true,
+    "info": "dist 19.5 -> 1.8"
+  },
+  {
+    "name": "AUTO: pauses during dialogue, resumes after",
+    "ok": true,
+    "info": "{\"moved\":0,\"st\":\"paused\",\"moved2\":12.219918341173601,\"d0\":13.999999999999995,\"st2\":\"engage\",\"dlg\":false,\"skips\":1,\"ps\":\"idle\"}"
+  },
+  {
+    "name": "AUTO: never targets civilians / friendly gang members; shows \"no enemies\" toast",
+    "ok": true,
+    "info": "{\"friendlyHostile\":false,\"target\":null,\"moved\":0.030749335313458085,\"toasts\":1,\"st\":\"none\"}"
+  },
+  {
+    "name": "AUTO: T key toggles on/off",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "AUTO sim tests: zero runtime errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile portrait: AUTO button visible, no overlap with action buttons",
+    "ok": true,
+    "info": "box {\"x\":162,\"y\":627,\"width\":72,\"height\":42} overlap "
+  },
+  {
+    "name": "mobile portrait: tapping AUTO toggles ON/OFF state (label + highlight)",
+    "ok": true,
+    "info": "{\"on\":{\"auto\":true,\"txt\":\"ON\",\"lit\":true},\"off\":{\"auto\":false,\"txt\":\"OFF\"}}"
+  },
+  {
+    "name": "mobile portrait: AUTO walks toward the enemy group",
+    "ok": true,
+    "info": "moved 8.3 m toward the group (they also close in), nearest enemy 1.4 m; cam dist 16.4 (zoom 11, portrait x1.22)"
+  },
+  {
+    "name": "mobile portrait: zero console errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "mobile landscape: AUTO button visible, no overlap with action buttons",
+    "ok": true,
+    "info": "box {\"x\":589,\"y\":200,\"width\":72,\"height\":42} overlap "
+  },
+  {
+    "name": "mobile landscape: tapping AUTO toggles ON/OFF state (label + highlight)",
+    "ok": true,
+    "info": "{\"on\":{\"auto\":true,\"txt\":\"ON\",\"lit\":true},\"off\":{\"auto\":false,\"txt\":\"OFF\"}}"
+  },
+  {
+    "name": "mobile landscape: AUTO walks toward the enemy group",
+    "ok": true,
+    "info": "moved 13.1 m toward the group (they also close in), nearest enemy 1.1 m; cam dist 13.4 (zoom 11, portrait x1.22)"
+  },
+  {
+    "name": "mobile landscape: zero console errors",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "story: quest completable by bot: tutorial",
+    "ok": true,
+    "info": "Lv2, downs 0, iters 13"
+  },
+  {
+    "name": "story: quest completable by bot: main1",
+    "ok": true,
+    "info": "Lv4, downs 1, iters 63"
+  },
+  {
+    "name": "story: quest completable by bot: side_cat",
+    "ok": true,
+    "info": "Lv4, downs 0, iters 9"
+  },
+  {
+    "name": "story: quest completable by bot: side_ramen",
+    "ok": true,
+    "info": "Lv5, downs 0, iters 22"
+  },
+  {
+    "name": "story: quest completable by bot: side_mikami",
+    "ok": true,
+    "info": "Lv5, downs 0, iters 15"
+  },
+  {
+    "name": "story: quest completable by bot: side_yamikaze",
+    "ok": true,
+    "info": "Lv6, downs 0, iters 34"
+  },
+  {
+    "name": "story: quest completable by bot: side_ryo",
+    "ok": true,
+    "info": "Lv6, downs 0, iters 29"
+  },
+  {
+    "name": "story: quest completable by bot: main2",
+    "ok": true,
+    "info": "Lv7, downs 1, iters 65"
+  },
+  {
+    "name": "story: quest completable by bot: side_rumor",
+    "ok": true,
+    "info": "Lv8, downs 0, iters 40"
+  },
+  {
+    "name": "story: quest completable by bot: main3",
+    "ok": true,
+    "info": "Lv9, downs 0, iters 92"
+  },
+  {
+    "name": "story: quest completable by bot: side_kai",
+    "ok": true,
+    "info": "Lv10, downs 0, iters 12"
+  },
+  {
+    "name": "story: quest completable by bot: main4",
+    "ok": true,
+    "info": "Lv11, downs 2, iters 176"
+  },
+  {
+    "name": "story: quest completable by bot: side_taisho",
+    "ok": true,
+    "info": "Lv12, downs 0, iters 34"
+  },
+  {
+    "name": "story: quest completable by bot: side_daigo",
+    "ok": true,
+    "info": "Lv12, downs 0, iters 19"
+  },
+  {
+    "name": "story: quest completable by bot: rematch_onoda",
+    "ok": true,
+    "info": "Lv13, downs 0, iters 24"
+  },
+  {
+    "name": "story: quest completable by bot: main5",
+    "ok": true,
+    "info": "Lv14, downs 1, iters 114"
+  },
+  {
+    "name": "story: quest completable by bot: side_scoop",
+    "ok": true,
+    "info": "Lv14, downs 0, iters 41"
+  },
+  {
+    "name": "story: quest completable by bot: side_tools",
+    "ok": true,
+    "info": "Lv15, downs 0, iters 99"
+  },
+  {
+    "name": "story: quest completable by bot: main6",
+    "ok": true,
+    "info": "Lv16, downs 0, iters 109"
+  },
+  {
+    "name": "story: quest completable by bot: side_granny2",
+    "ok": true,
+    "info": "Lv16, downs 0, iters 15"
+  },
+  {
+    "name": "story: quest completable by bot: side_todoroki",
+    "ok": true,
+    "info": "Lv17, downs 0, iters 38"
+  },
+  {
+    "name": "story: quest completable by bot: main7",
+    "ok": true,
+    "info": "Lv18, downs 1, iters 150"
+  },
+  {
+    "name": "story: quest completable by bot: rematch_kirishima",
+    "ok": true,
+    "info": "Lv18, downs 0, iters 31"
+  },
+  {
+    "name": "story: quest completable by bot: rematch_goda",
+    "ok": true,
+    "info": "Lv19, downs 0, iters 35"
+  },
+  {
+    "name": "story: quest completable by bot: main8",
+    "ok": true,
+    "info": "Lv20, downs 1, iters 153"
+  },
+  {
+    "name": "story: quest completable by bot: main9",
+    "ok": true,
+    "info": "Lv22, downs 0, iters 168"
+  },
+  {
+    "name": "story: quest completable by bot: main10",
+    "ok": true,
+    "info": "Lv23, downs 0, iters 161"
+  },
+  {
+    "name": "story: quest completable by bot: tournament",
+    "ok": true,
+    "info": "Lv25, downs 0, iters 120"
+  },
+  {
+    "name": "story: quest completable by bot: secret_sakaki",
+    "ok": true,
+    "info": "Lv27, downs 0, iters 108"
+  },
+  {
+    "name": "bosses: all 10 bosses + 10 mini-bosses spawn (bossStart)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "bosses: every boss/mini-boss goes through phase 2 and the final phase",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "bosses: every boss/mini-boss is beaten (incl. secret boss Sakakibara)",
+    "ok": true,
+    "info": ""
+  },
+  {
+    "name": "story: chapters 1-10 complete (main10 done), post-game tournament + secret done",
+    "ok": true,
+    "info": "29 quests done"
+  },
+  {
+    "name": "fights: big group encounters (>= 8 fighters) happen",
+    "ok": true,
+    "info": "largest encounter 10"
+  },
+  {
+    "name": "balance: level curve rises steadily across the 10 chapters",
+    "ok": true,
+    "info": "main1:Lv4 main2:Lv7 main3:Lv9 main4:Lv11 main5:Lv14 main6:Lv16 main7:Lv18 main8:Lv20 main9:Lv22 main10:Lv23"
+  },
+  {
+    "name": "story run: zero runtime errors",
     "ok": true,
     "info": ""
   }

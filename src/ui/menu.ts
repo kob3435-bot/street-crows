@@ -13,10 +13,10 @@ import { renderMapImage } from './hud';
 import type { SaveProvider } from '../core/save';
 import { audio } from '../core/audio';
 
-export interface Settings { quality: number; volume: number; music: number; sens: number; invertY: boolean; fps: boolean }
+export interface Settings { quality: number; volume: number; music: number; sens: number; invertY: boolean; fps: boolean; zoom: number }
 export function loadSettings(): Settings {
   const coarse = matchMedia('(pointer: coarse)').matches;
-  const def: Settings = { quality: coarse ? 0 : 1, volume: 0.8, music: 0.5, sens: 1, invertY: false, fps: false };
+  const def: Settings = { quality: coarse ? 0 : 1, volume: 0.8, music: 0.5, sens: 1, invertY: false, fps: false, zoom: 11 };
   try { return { ...def, ...JSON.parse(localStorage.getItem('sc_settings') || '{}') }; } catch { return def; }
 }
 export function saveSettings(s: Settings) { try { localStorage.setItem('sc_settings', JSON.stringify(s)); } catch {} }
@@ -136,6 +136,7 @@ export class Menu {
       <div class="opt"><label>${t('volume')}</label><input type="range" min="0" max="1" step="0.05" value="${s.volume}" data-s="volume"></div>
       <div class="opt"><label>${t('music')}</label><input type="range" min="0" max="1" step="0.05" value="${s.music}" data-s="music"></div>
       <div class="opt"><label>${t('sens')}</label><input type="range" min="0.3" max="2.5" step="0.1" value="${s.sens}" data-s="sens"></div>
+      <div class="opt"><label>${tx({ th: 'ระยะกล้อง (ซูม)', en: 'Camera distance (zoom)' })}</label><input type="range" min="4.5" max="18" step="0.5" value="${s.zoom}" data-s="zoom"></div>
       <div class="opt"><label>${t('invertY')}</label><input type="checkbox" ${s.invertY ? 'checked' : ''} data-c="invertY"></div>
       <div class="opt"><label>FPS</label><input type="checkbox" ${s.fps ? 'checked' : ''} data-c="fps"></div>
       <p style="font-size:12px">${tx({ th: 'เปลี่ยนคุณภาพกราฟิกจะโหลดหน้าใหม่ (บันทึกเกมอัตโนมัติก่อน)', en: 'Changing quality reloads the page (autosaves first).' })}</p>`;
@@ -207,14 +208,15 @@ export class Menu {
 export function controlsHTML() {
   const T = (th: string, en: string) => tx({ th, en });
   const rows: [string, string][] = [
-    [T('เดิน / วิ่ง', 'Move / Sprint'), 'WASD · Shift'], [T('กล้อง', 'Camera'), T('เมาส์ (คลิกเพื่อล็อกเมาส์)', 'Mouse (click to lock pointer)')],
+    [T('เดิน / วิ่ง', 'Move / Sprint'), 'WASD · Shift'], [T('กล้อง', 'Camera'), T('เมาส์ (คลิกเพื่อล็อกเมาส์) · ล้อเมาส์ / + - = ซูม', 'Mouse (click to lock pointer) · Wheel / + - = zoom')],
+    ['AUTO', T('T = เปิด/ปิด เดินหาศัตรูอัตโนมัติ (ไม่โจมตีให้ ต้องต่อยเอง) · ขยับเองเพื่อควบคุมชั่วคราว', 'T = toggle auto-walk to enemies (never attacks for you) · move to take over temporarily')],
     [T('ต่อย', 'Punch'), T('คลิกซ้าย / J', 'LMB / J')], [T('หมัดหนัก', 'Heavy'), T('คลิกขวา / K', 'RMB / K')], [T('เตะ', 'Kick'), 'F'], [T('เตะหนัก (ทำลายการ์ด)', 'Heavy kick (guard break)'), 'C'],
     [T('หลบ (หลบเพอร์เฟกต์ = สโลว์)', 'Dodge (perfect = slow-mo)'), 'Space'], [T('การ์ด (กดจังหวะพอดี = ปัด)', 'Block (tap on time = parry)'), 'Q'], [T('จับ / ทุ่ม', 'Grab / Throw'), T('G (กดอีกครั้งเพื่อทุ่ม) / คลิกกลาง', 'G (press again to throw) / MMB')],
     [T('ท่าพิเศษ (เกจเต็ม)', 'Special (full meter)'), 'R'], [T('ท่าปิดฉาก', 'Finisher'), T('หมัดหนักใส่ศัตรูที่มึน', 'Heavy on a dizzy enemy')], [T('สวนกลับ', 'Counter'), T('โจมตีทันทีหลังหลบ/การ์ดสำเร็จ', 'Attack right after a successful dodge/block')],
     [T('คอมโบ', 'Combos'), 'P-P-Heavy · P-K-K · Dodge→Attack · Block→Attack · G→G · Sprint+Kick (flying kick) · P-P-P (skill)'],
     [T('คุย / ใช้', 'Interact'), 'E'], [T('เมนู', 'Menu'), 'Tab / Esc'], [T('แผนที่', 'Map'), 'M'], [T('ไอเทม', 'Items'), '1 · 2 · 3'], [T('ช่วยเหลือ', 'Help'), 'H'],
-    ['Gamepad', 'LS move · RS camera · X punch · Y heavy · B kick · RT heavy kick · A dodge · LB block · RB grab · LT sprint · D-pad↑/R3 special · D-pad→ interact · Back menu'],
-    [T('มือถือ', 'Mobile'), T('จอยซ้าย · ปุ่มขวา · ลากจอขวาเพื่อหมุนกล้อง · ดันจอยสุด = วิ่ง', 'Left stick · right buttons · drag right side to look · push stick fully = sprint')],
+    ['Gamepad', 'LS move · RS camera · X punch · Y heavy · B kick · RT heavy kick · A dodge · LB block · RB grab · LT sprint · R3 special · L3 AUTO · D-pad↑↓ zoom · D-pad→ interact · Back menu'],
+    [T('มือถือ', 'Mobile'), T('จอยซ้าย · ปุ่มขวา · ลากจอขวาเพื่อหมุนกล้อง · จีบนิ้วสองนิ้วเพื่อซูม · ดันจอยสุด = วิ่ง · ปุ่ม AUTO', 'Left stick · right buttons · drag right side to look · pinch to zoom · push stick fully = sprint · AUTO button')],
   ];
   return `<h3>${t('controls')}</h3><table class="controls-tbl">${rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join('')}</table>`;
 }

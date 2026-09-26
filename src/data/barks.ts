@@ -22,4 +22,13 @@ export const NPC_CHATTER: Record<string, LText[]> = {
   minoru: [T('พี่ชายผมดีขึ้นแล้ว ขอบคุณครับ', 'My brother is doing better. Thank you.')],
   daigo: [T('...ลมดีนะวันนี้', '...Good wind today.'), T('ถ้ามีใครรังแกเด็ก บอกฉัน', 'If anyone bullies kids, tell me.')],
   granny: [T('ขอบใจนะหนู โมจิสบายดี', 'Thank you dear, Mochi is doing well.'), T('หนุ่มสมัยนี้ตัวโตจริงๆ', 'Young men are so big these days.')],
+  taisho: [T('......(พยักหน้า)', '......(nods)'), T('...เส้นวันนี้ดี', '...Good noodles today.'), T('...ห้ามต่อยกันในร้าน', '...No fighting in the shop.')],
+  ryo: [T('ผมกำลังฝึกหนักมาก! ...ตั้งแต่เมื่อวาน', 'I\'m training super hard! ...Since yesterday.'), T('รุ่นพี่ฮารุ! ผมเป็นมือขวาคุณได้ไหม? มือซ้ายก็ได้!', 'Haru-senpai! Can I be your right hand? Left hand is fine too!')],
+  kai: [T('พี่ชายเริ่มยอมรับสไตล์ฉันแล้ว', 'My brother is starting to accept my style.'), T('ลมเปลี่ยนทิศได้ ฉันก็เปลี่ยนได้', 'The wind can change direction. So can I.')],
+  onoda: [T('หัวฉันแข็งขึ้นทุกวัน!', 'My head gets harder every day!'), T('คุโรงาเนะเป็นของนาย... แต่หัวค้อนเป็นของฉัน!', 'Kurogane is yours... but the Hammerhead is mine!')],
+  kirishima: [T('ระเบียบไม่ได้มาจากความกลัว ฉันเพิ่งเข้าใจ', 'Order doesn\'t come from fear. I understand that now.'), T('พี่ชายฉันทำราเมงไม่เป็นเลย', 'My brother can\'t make ramen at all.')],
+  goda: [T('มิโนรุเริ่มสอนฉันซ่อมมอเตอร์ไซค์', 'Minoru is teaching me to fix bikes.'), T('แรงของฉันตอนนี้ใช้ปกป้องคน', 'These days my strength protects people.')],
+  todoroki: [T('กลองไรจินตีเพื่อเมืองนี้แล้ว!', 'Raijin\'s drum beats for this city now!'), T('อิชิงามิกินราเมงไปเจ็ดชาม', 'Ishigami ate seven bowls of ramen.')],
+  sakaki: [T('โบยะคุง เข้าเรียนด้วยนะ', 'Boya-kun, please attend class.'), T('ความแข็งแกร่งคือการรู้ว่าเมื่อไรไม่ควรใช้มัน', 'Strength is knowing when not to use it.'), T('ครูเคยเป็นเด็กเกเรเหมือนกัน ...นานมากแล้ว', 'I was a delinquent once too. ...A long time ago.')],
+  kanemura: [T('ทัวร์นาเมนต์เปิดรับทุกคืน ค่าดูแพง ค่าต่อยฟรี', 'The tournament runs every night. Watching costs. Fighting\'s free.'), T('สนิมก็เป็นเหล็กนะ อย่าลืม', 'Rust is still iron. Don\'t forget it.')],
 };

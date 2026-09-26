@@ -28,7 +28,7 @@ export class Progression {
   onLevel: ((lvl: number) => void) | null = null;
   has(id: string) { return this.skills.has(id); }
   get repTier() { let i = 0; REP_TIERS.forEach((t, k) => { if (this.rep >= t.min) i = k; }); return i; }
-  get maxHp() { return 100 + (this.level - 1) * 12 + this.stats.defense * 2 - 10 + (this.has('thick_skin') ? 25 : 0); }
+  get maxHp() { return 100 + (this.level - 1) * 12 + this.stats.defense * 2 - 10 + (this.has('thick_skin') ? 25 : 0) + (this.has('unbreakable') ? 40 : 0); }
   get maxStamina() { return 100 + (this.level - 1) * 3; }
   gainMul() { return (1 + (this.stats.charisma - 5) * 0.04) * (this.has('aura') ? 1.3 : 1); }
   addExp(n: number): number {
@@ -64,6 +64,8 @@ export class Progression {
     if (this.has('iron_guard')) { m.guardTake = 0.07; m.guardMax = 150; }
     if (this.has('rebound')) m.getup = 0.5; m.lastStand = this.has('last_stand');
     if (this.has('danger_sense')) { m.perfectWin = 0.26; m.slowmo = 1.1; }
+    if (this.has('demon_fist')) m.dmg *= 1.12; if (this.has('afterimage')) m.afterimage = true;
+    if (this.has('flow_state')) { m.atkSpeed *= 1.08; m.comboWin += 0.06; } if (this.has('unbreakable')) m.def *= 1.15; if (this.has('pack_breaker')) m.packBreaker = true;
     return m;
   }
   static allSkills() { return SKILLS; }

@@ -4,7 +4,7 @@ import { audio } from '../core/audio';
 
 /** Mobile touch layer: floating joystick (left), drag-look (right), action buttons. */
 export class TouchControls {
-  root: HTMLElement; active = false; private sp!: HTMLElement;
+  root: HTMLElement; active = false; private sp!: HTMLElement; private autoB!: HTMLElement; private autoShown = '';
   constructor(parent: HTMLElement, private input: Input, private w: World) {
     const r = document.createElement('div'); r.id = 'touch'; this.root = r; parent.appendChild(r);
     r.innerHTML = `<div class="look"></div><div class="joy"><div class="jbase"><div class="jknob"></div></div></div>
@@ -17,9 +17,10 @@ export class TouchControls {
         <div class="tb" data-hold="block" style="right:156px;bottom:84px">การ์ด<br><small>BLOCK</small></div>
         <div class="tb" data-a="grab" style="right:98px;bottom:142px;width:54px;height:54px;font-size:12px">จับ<br><small>GRAB</small></div>
         <div class="tb sp" data-a="special" style="right:20px;bottom:172px">พิเศษ<br><small>SP</small></div>
+        <div class="tb autob" data-a="auto" style="right:168px;bottom:158px">AUTO<br><small class="st">OFF</small></div>
       </div>
       <div class="top"><div class="tb" data-a="interact">E<br><small>คุย</small></div><div class="tb" data-a="item1">🍙</div><div class="tb" data-a="menu">☰</div></div>`;
-    this.sp = r.querySelector('.tb.sp')!;
+    this.sp = r.querySelector('.tb.sp')!; this.autoB = r.querySelector('.tb.autob')!;
     r.querySelectorAll<HTMLElement>('[data-a]').forEach(b => {
       b.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); audio.init(); this.input.press(b.dataset.a as Action); b.classList.add('on'); }, { passive: false });
       const up = (e: Event) => { e.preventDefault(); b.classList.remove('on'); };
@@ -38,12 +39,20 @@ export class TouchControls {
     const jend = (e: TouchEvent) => { for (const t of Array.from(e.changedTouches)) if (t.identifier === jid) { jid = null; base.style.display = 'none'; this.input.setVirtualMove(0, 0, false); } };
     joy.addEventListener('touchend', jend); joy.addEventListener('touchcancel', jend);
     // look
-    const look = r.querySelector<HTMLElement>('.look')!; let lid: number | null = null, lx = 0, ly = 0;
-    look.addEventListener('touchstart', (e) => { e.preventDefault(); audio.init(); const t = e.changedTouches[0]; lid = t.identifier; lx = t.clientX; ly = t.clientY; }, { passive: false });
-    look.addEventListener('touchmove', (e) => { e.preventDefault(); for (const t of Array.from(e.changedTouches)) if (t.identifier === lid) { this.input.addTouchLook(t.clientX - lx, t.clientY - ly); lx = t.clientX; ly = t.clientY; } }, { passive: false });
-    const lend = (e: TouchEvent) => { for (const t of Array.from(e.changedTouches)) if (t.identifier === lid) lid = null; };
+    // look (one finger) + pinch zoom (two fingers)
+    const look = r.querySelector<HTMLElement>('.look')!; let lid: number | null = null, lx = 0, ly = 0; let pinchD = 0;
+    const lookTouches = (e: TouchEvent) => Array.from(e.touches).filter(t => look.contains(t.target as Node));
+    look.addEventListener('touchstart', (e) => { e.preventDefault(); audio.init(); const ts = lookTouches(e); if (ts.length >= 2) { pinchD = Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY); lid = null; return; } const t = e.changedTouches[0]; lid = t.identifier; lx = t.clientX; ly = t.clientY; }, { passive: false });
+    look.addEventListener('touchmove', (e) => {
+      e.preventDefault(); const ts = lookTouches(e);
+      if (ts.length >= 2) { const d = Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY); if (pinchD > 0) this.input.addZoom(-(d - pinchD) * 0.035); pinchD = d; return; }
+      for (const t of Array.from(e.changedTouches)) if (t.identifier === lid) { this.input.addTouchLook(t.clientX - lx, t.clientY - ly); lx = t.clientX; ly = t.clientY; }
+    }, { passive: false });
+    const lend = (e: TouchEvent) => { if (lookTouches(e).length < 2) pinchD = 0; for (const t of Array.from(e.changedTouches)) if (t.identifier === lid) lid = null; };
     look.addEventListener('touchend', lend); look.addEventListener('touchcancel', lend);
   }
   setActive(on: boolean) { this.active = on; this.root.classList.toggle('on', on); document.body.classList.toggle('touchmode', on); }
-  update() { if (!this.active) return; this.sp.classList.toggle('ready', this.w.player.meter >= 100); this.root.style.visibility = this.w.menuOpen ? 'hidden' : 'visible'; }
+  update() {
+    if (!this.active) return; this.sp.classList.toggle('ready', this.w.player.meter >= 100);
+    const st = this.w.auto ? 'ON' : 'OFF'; if (st !== this.autoShown) { this.autoShown = st; this.autoB.classList.toggle('lit', this.w.auto); this.autoB.querySelector('.st')!.textContent = st; } this.root.style.visibility = this.w.menuOpen ? 'hidden' : 'visible'; }
 }
