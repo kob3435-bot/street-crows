@@ -19,13 +19,15 @@ export default async function (R) {
         if (w.col.ray(px, 1.2, pz, dx, dy, dz, 13, true) >= 12.5 && w.col.ray(px, 1.2, pz, -dx, 0, -dz, 3, true) >= 2.9) pick = { lx, lz, px, pz, yaw, a }; }
       if (pick) break; }
     if (!pick) return { none: true };
-    w.teleport(pick.px, pick.pz, 0); w.camYaw = pick.yaw; w.camPitch = P;
+    w.teleport(pick.px, pick.pz, 0); const pl = w.player; pl.x = pl.px = pick.px; pl.z = pl.pz = pick.pz; w.camYaw = pick.yaw; w.camPitch = P; // exact spot (teleport may nudge ~2 m)
     // let the chunk stream in and the camera boom settle (it starts at the default distance, then may ease in), then read the fade
     let last = -1, calm = 0; for (let t = 0; t < 60 && calm < 4; t++) { await sl(150); const d = r.camDist; calm = Math.abs(d - last) < 0.05 && t > 6 ? calm + 1 : 0; last = d; } await sl(900);
-    const pi = city.pinfos.find(q => pick.lx > q.x0 && pick.lx < q.x1 && pick.lz > q.z0 && pick.lz < q.z1 && q.y1 > 4);
-    if (!pi) return { noInfo: true, pick };
-    const faded = pi.cur, dist = r.camDist; w.camYaw = pick.a; await sl(1500); const back = pi.cur;
-    return { lamp: [pick.lx, pick.lz], camDist: +dist.toFixed(1), faded, back };
+    const find = () => city.pinfos.filter(q => pick.lx > q.x0 && pick.lx < q.x1 && pick.lz > q.z0 && pick.lz < q.z1 && q.y1 > 4);
+    for (let t = 0; t < 40 && !find().length; t++) await sl(150); // chunk streaming can lag on a live host
+    let pis = find(); if (!pis.length) return { noInfo: true, pick };
+    let faded = 1; for (let t = 0; t < 25 && faded >= 0.5; t++) { pis = find(); faded = Math.min(...pis.map(q => q.cur)); if (faded >= 0.5) await sl(120); }
+    const pi = pis.reduce((a, q) => q.cur < a.cur ? q : a, pis[0]); const dist = r.camDist; w.camYaw = pick.a; await sl(1500); const back = pi.cur;
+    const cp = r.camera.position; return { lamp: [pick.lx, pick.lz], camDist: +dist.toFixed(1), faded, back, dbg: { pl: [+w.player.x.toFixed(1), +w.player.z.toFixed(1)], want: [pick.px, pick.pz], cam: [+cp.x.toFixed(1), +cp.y.toFixed(1), +cp.z.toFixed(1)], yaw: +w.camYaw.toFixed(2), pickYaw: +pick.yaw.toFixed(2), st: w.player.state, dlg: !!w.dialogue, menu: w.menuOpen } };
   });
   check(R, 'occluders: street lamp between camera and player fades (screen-door), restores when clear', A && A.faded < 0.5 && A.back > 0.95, JSON.stringify(A));
   // --- B: buildings on the sight line fade (stay full height, see-through) — no stubs
@@ -59,7 +61,7 @@ export default async function (R) {
   const keysKb = await page.evaluate(() => document.querySelector('#keys').textContent);
   // gamepad: glyphs swap on first pad input
   await page.evaluate(() => { const pad = { id: 'Virtual Pad', index: 0, connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false, value: 0 })) }; window.__pad = pad; navigator.getGamepads = () => [pad, null, null, null]; });
-  await page.evaluate(() => { window.__pad.axes[0] = 0.8; }); await sleep(300); await page.evaluate(() => { window.__pad.axes[0] = 0; });
+  await page.evaluate(() => { window.__pad.axes[0] = 0.8; }); for (let t = 0; t < 20; t++) { await sleep(100); if (t >= 2 && await page.evaluate(() => document.body.classList.contains('dev-pad'))) break; } await page.evaluate(() => { window.__pad.axes[0] = 0; });
   await page.evaluate(() => { const G = window.__game; G.hud.hintsSeen.delete('eblock'); G.hud.hint('eblock', 'x', () => ''); G.hud.hideHint(); G.hud.hintsSeen.delete('parry'); G.bus.emit('parry', { f: G.world.player }); });
   await sleep(200);
   const P = await page.evaluate(() => ({ keys: document.querySelector('#keys').innerHTML, hint: document.querySelector('#hint').innerHTML, dev: document.body.classList.contains('dev-pad') }));
